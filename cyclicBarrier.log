@@ -1,0 +1,44 @@
+1589975891157|DCVM Cyclic Barrier up and running!
+1589975891163|DCVM Cyclic Barrier accepts: provider localhost 37052
+1589975891167|DCVM Cyclic Barrier has received 1 out of 2 expected.
+1589975901668|All connected!
+1589975901668|DCVM Cyclic Barrier accepts: consumer localhost 37056
+1589975901671|DCVM Cyclic Barrier has received 2 out of 2 expected.
+1589975901671|DCVM Cyclic Barrier releases 2 sites.
+1589975901673|DCVM Cyclic Barrier accepts: provider localhost 37052
+1589975901675|DCVM Cyclic Barrier has received 1 out of 2 expected.
+1589975901744|DCVM Cyclic Barrier accepts: consumer localhost 37056
+1589975901744|DCVM Cyclic Barrier has received 2 out of 2 expected.
+1589975901744|DCVM Cyclic Barrier releases 2 sites.
+1589975902320|DCVM Cyclic Barrier accepts: provider localhost 37052
+1589975902321|DCVM Cyclic Barrier has received 1 out of 2 expected.
+1589975902408|DCVM Cyclic Barrier accepts: consumer localhost 37056
+1589975902409|DCVM Cyclic Barrier has received 2 out of 2 expected.
+1589975902409|DCVM Cyclic Barrier releases 2 sites.
+1589975902411|DCVM Cyclic Barrier accepts: provider localhost 37052
+1589975902412|DCVM Cyclic Barrier has received 1 out of 2 expected.
+1589975902520|DCVM Cyclic Barrier accepts: consumer localhost 37056
+1589975902521|DCVM Cyclic Barrier has received 2 out of 2 expected.
+1589975902521|DCVM Cyclic Barrier releases 2 sites.
+1589975902567|DCVM Cyclic Barrier accepts: provider localhost 37052
+1589975902567|DCVM Cyclic Barrier has received 1 out of 2 expected.
+1589975902576|DCVM Cyclic Barrier accepts: consumer localhost 37056
+1589975902576|DCVM Cyclic Barrier has received 2 out of 2 expected.
+1589975902576|DCVM Cyclic Barrier releases 2 sites.
+1589975917664|DCVM Cyclic Barrier accepts: consumer localhost 37056
+1589975917664|DCVM Cyclic Barrier accepts: provider localhost 37052
+1589975917665|DCVM Cyclic Barrier has received 1 out of 2 expected.
+1589975917666|DCVM Cyclic Barrier has received 2 out of 2 expected.
+1589975917666|DCVM Cyclic Barrier releases 2 sites.
+1589975917848|DCVM Cyclic Barrier accepts: consumer localhost 37056
+1589975917849|DCVM Cyclic Barrier has received 1 out of 2 expected.
+1589975917850|DCVM Cyclic Barrier has received 2 out of 2 expected.
+1589975917850|DCVM Cyclic Barrier releases 2 sites.
+1589975917940|DCVM Cyclic Barrier accepts: consumer localhost 37056
+1589975917941|DCVM Cyclic Barrier has received 1 out of 2 expected.
+1589975918032|DCVM Cyclic Barrier accepts: provider localhost 37052
+1589975918033|DCVM Cyclic Barrier has received 2 out of 2 expected.
+1589975918033|DCVM Cyclic Barrier releases 2 sites.
+1589975918037|DCVMCyclicBarrier.run() finished.
+1589975918037|DCVMCyclicBarrier.run() finished.
+1589975918037|DCVM Cyclic Barrier shuts down!

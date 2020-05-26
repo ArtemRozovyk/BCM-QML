@@ -1,0 +1,61 @@
+1589978496939|DCVM Cyclic Barrier up and running!
+1589978496945|DCVM Cyclic Barrier accepts: provider localhost 37182
+1589978496953|DCVM Cyclic Barrier has received 1 out of 3 expected.
+1589978500675|DCVM Cyclic Barrier accepts: consumer localhost 37186
+1589978500676|DCVM Cyclic Barrier has received 2 out of 3 expected.
+1589978502515|All connected!
+1589978502516|DCVM Cyclic Barrier accepts: assembler localhost 37190
+1589978502518|DCVM Cyclic Barrier has received 3 out of 3 expected.
+1589978502518|DCVM Cyclic Barrier releases 3 sites.
+1589978502548|DCVM Cyclic Barrier accepts: provider localhost 37182
+1589978502549|DCVM Cyclic Barrier accepts: consumer localhost 37186
+1589978502549|DCVM Cyclic Barrier has received 1 out of 3 expected.
+1589978502550|DCVM Cyclic Barrier has received 2 out of 3 expected.
+1589978502564|DCVM Cyclic Barrier accepts: assembler localhost 37190
+1589978502565|DCVM Cyclic Barrier has received 3 out of 3 expected.
+1589978502565|DCVM Cyclic Barrier releases 3 sites.
+1589978503000|DCVM Cyclic Barrier accepts: assembler localhost 37190
+1589978503001|DCVM Cyclic Barrier has received 1 out of 3 expected.
+1589978503036|DCVM Cyclic Barrier accepts: consumer localhost 37186
+1589978503036|DCVM Cyclic Barrier accepts: provider localhost 37182
+1589978503037|DCVM Cyclic Barrier has received 2 out of 3 expected.
+1589978503039|DCVM Cyclic Barrier has received 3 out of 3 expected.
+1589978503039|DCVM Cyclic Barrier releases 3 sites.
+1589978503041|DCVM Cyclic Barrier accepts: assembler localhost 37190
+1589978503042|DCVM Cyclic Barrier has received 1 out of 3 expected.
+1589978503084|DCVM Cyclic Barrier accepts: consumer localhost 37186
+1589978503084|DCVM Cyclic Barrier accepts: provider localhost 37182
+1589978503085|DCVM Cyclic Barrier has received 2 out of 3 expected.
+1589978503086|DCVM Cyclic Barrier has received 3 out of 3 expected.
+1589978503086|DCVM Cyclic Barrier releases 3 sites.
+1589978503172|DCVM Cyclic Barrier accepts: provider localhost 37182
+1589978503172|DCVM Cyclic Barrier accepts: consumer localhost 37186
+1589978503173|DCVM Cyclic Barrier has received 1 out of 3 expected.
+1589978503174|DCVM Cyclic Barrier has received 2 out of 3 expected.
+1589978503283|DCVM Cyclic Barrier accepts: assembler localhost 37190
+1589978503284|DCVM Cyclic Barrier has received 3 out of 3 expected.
+1589978503284|DCVM Cyclic Barrier releases 3 sites.
+1589978518330|DCVM Cyclic Barrier accepts: provider localhost 37182
+1589978518331|DCVM Cyclic Barrier accepts: consumer localhost 37186
+1589978518332|DCVM Cyclic Barrier accepts: assembler localhost 37190
+1589978518332|DCVM Cyclic Barrier has received 1 out of 3 expected.
+1589978518334|DCVM Cyclic Barrier has received 2 out of 3 expected.
+1589978518335|DCVM Cyclic Barrier has received 3 out of 3 expected.
+1589978518335|DCVM Cyclic Barrier releases 3 sites.
+1589978518512|DCVM Cyclic Barrier accepts: assembler localhost 37190
+1589978518513|DCVM Cyclic Barrier has received 1 out of 3 expected.
+1589978518520|DCVM Cyclic Barrier accepts: provider localhost 37182
+1589978518521|DCVM Cyclic Barrier has received 2 out of 3 expected.
+1589978518524|DCVM Cyclic Barrier accepts: consumer localhost 37186
+1589978518524|DCVM Cyclic Barrier has received 3 out of 3 expected.
+1589978518524|DCVM Cyclic Barrier releases 3 sites.
+1589978518612|DCVM Cyclic Barrier accepts: assembler localhost 37190
+1589978518613|DCVM Cyclic Barrier has received 1 out of 3 expected.
+1589978518712|DCVM Cyclic Barrier accepts: provider localhost 37182
+1589978518713|DCVM Cyclic Barrier has received 2 out of 3 expected.
+1589978518796|DCVM Cyclic Barrier accepts: consumer localhost 37186
+1589978518797|DCVM Cyclic Barrier has received 3 out of 3 expected.
+1589978518797|DCVM Cyclic Barrier releases 3 sites.
+1589978518799|DCVMCyclicBarrier.run() finished.
+1589978518799|DCVMCyclicBarrier.run() finished.
+1589978518799|DCVM Cyclic Barrier shuts down!
