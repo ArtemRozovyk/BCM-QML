@@ -115,7 +115,8 @@ public class ChocoSolver {
 
         Constraint constraintServer = makeConstraint(model, constraintMap, BooleanEvaluator.makeExprFromString(serverTreeStr),false);
         Constraint constraintClient = makeConstraint(model, constraintMap, BooleanEvaluator.makeExprFromString(clientTreeStr),true);
-
+        //System.out.println(BooleanEvaluator.makeExprFromString(clientTreeStr));
+        //System.out.println(BooleanEvaluator.makeConstraintN(BooleanEvaluator.makeExprFromString(clientTreeStr)));
         model.and(constraintServer,constraintClient).post();
 
         model.getSolver().limitSolution(10);

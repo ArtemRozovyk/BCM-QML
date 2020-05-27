@@ -49,6 +49,22 @@ public class BooleanEvaluator {
 		return "error";
 
 	};
+	public static String makeConstraintN (BooleanExpression ast){
+		if(ast instanceof Terminal){
+			return ast.toString();
+		}
+		if(ast instanceof And){
+			return "or("+makeConstraintN(((And) ast).getLeft())+","+makeConstraintN(((And) ast).getRight())+")";
+		}
+		if(ast instanceof Or){
+			return "and("+makeConstraintN(((Or) ast).getLeft())+","+makeConstraintN(((Or) ast).getRight())+")";
+		}
+		if(ast instanceof Not){
+			return "!("+makeConstraintN(((Not) ast).getLeft())+")";
+		}
+		return "error";
+
+	};
 
 
 }
