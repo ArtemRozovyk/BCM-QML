@@ -37,7 +37,7 @@ public class SolverTesting {
         client = "x > 1.5 && x <3";
         boolean implies = ChocoSolver.verifyAll(server, client);
         assertFalse(implies);
-        System.err.println("Wrong : !(" + server + ") -> (" + client + ")");
+        System.err.println("Wrong : !((" + server + ") -> (" + client + "))");
     }
 
     @Test
@@ -46,7 +46,7 @@ public class SolverTesting {
         client = "x > 1.3 && x <2";
         boolean implies = ChocoSolver.verifyAll(server, client);
         assertFalse(implies);
-        System.err.println("Wrong: !(" + server + ") -> (" + client + ")");
+        System.err.println("Wrong: !((" + server + ") -> (" + client + "))");
     }
 
 
