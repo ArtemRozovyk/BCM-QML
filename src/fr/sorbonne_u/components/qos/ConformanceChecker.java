@@ -4,11 +4,13 @@ import fr.sorbonne_u.components.interfaces.*;
 import fr.sorbonne_u.components.qos.annotations.*;
 import fr.sorbonne_u.components.qos.interfaces.*;
 import javafx.util.*;
-
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtMethod;
 import javax.script.*;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
-
 public class ConformanceChecker {
 
 
@@ -218,5 +220,82 @@ public class ConformanceChecker {
         }
         return res;
     }
+    
+    public static void AddDynamicConformityCode(Class<?> IR, Class<?> outboundPort, ClassPool pool) throws Exception {
+    	
+    	//get the interface Annotations
+		Annotation[] interfaceAnnotations = IR.getAnnotations(); 
+		
+		//for each interface annotation do whatever ... 
+		for(Annotation annotation : interfaceAnnotations ){
+			if(annotation instanceof ContractDefinition){
+				//to do ...
+			}
+			else if(annotation instanceof Require){
+				//to do ...
+			}
+		}
+    	
+		//get all the methods of the interface
+		Method[] methodsIR = IR.getDeclaredMethods();
+		
+		//for each method get its annotation and add the proper verification code in the class method
+		for (Method mIR : methodsIR) {
+			
+			Method mOutboundPort = outboundPort.getMethod(mIR.getName(), mIR.getParameterTypes());
+			Annotation[] methodAnnotations = mIR.getAnnotations();
+			
+			//for each annotation add the proper code verification  
+			for(Annotation annotation : methodAnnotations ){
+				if(annotation instanceof Pre){
+					
+					String expression = ((Pre)annotation).expression();
+					//to do ...
+				}
+				else if(annotation instanceof Post){
+					//to do ...
+				} else if (annotation instanceof Require){
+					//to do ...
+				} else if (annotation instanceof RequireContract){
+					//to do ...
+				}
+			}
+			
+			
+		/*
+		 * 	
+		 * 
+			
+			//String[] args = annotation.args();
+
+			//for (int i = 0; i < args.length; i++) {
+			//	expression = expression.replaceAll("\\b" + args[i] + "\\b", "\\$" + (i + 1));
+			//}
+
+			// Partie javassist
+
+			CtClass cc = pool.get(outboundPort.getCanonicalName());
+			cc.defrost();
+
+			Class<?>[] paramTypes = mOutboundPort.getParameterTypes();
+			CtClass[] params = new CtClass[paramTypes.length];
+
+			for (int i = 0; i < params.length; i++) {
+				params[i] = pool.get(paramTypes[i].getName());
+			}
+
+			CtMethod cm = cc.getDeclaredMethod(mOutboundPort.getName(), params);
+			
+			// insérer le code au debut de la methode
+			cm.insertBefore("if (!(" + expression + "))" + "throw new IllegalArgumentException();");
+			cc.writeFile();
+			
+			//byte[] classFile = cc.toBytecode();
+			//HotSwapper hs = new HotSwapper(8000);
+			//hs.reload(cc.getName(), classFile);
+			
+		}
+    */}
+	}
 
 }
