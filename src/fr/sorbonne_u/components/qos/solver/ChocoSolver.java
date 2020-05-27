@@ -49,25 +49,38 @@ public class ChocoSolver {
     }
 
 
-    static void some() {
+    static boolean some() throws Exception {
         String server = "x > 1.4 && x <3.0";
         String client = "x > 1.3 && x <3.1";
-        List<Expression> clientExprs = new ArrayList<>(Objects.requireNonNull(getExpressions(client)));
-        List<Expression> serverExprs = new ArrayList<>(Objects.requireNonNull(getExpressions(server)));
+        List<Expression> clientExprs = new ArrayList<>(Objects.requireNonNull(parseExpressions(client)));
+        List<Expression> serverExprs = new ArrayList<>(Objects.requireNonNull(parseExpressions(server)));
 
         try {
-            boolean b = verifyAll(serverExprs, clientExprs);
+           return verifyAll(serverExprs, clientExprs);
         } catch (ParseException e) {
             e.printStackTrace();
         }
+       throw new Exception("someExp");
 
-
-        System.out.println(clientExprs.size());
-        System.out.println(serverExprs.size());
+        //System.out.println(clientExprs.size());
+        //System.out.println(serverExprs.size());
 
 
     }
+    /** Will parse the strings verify if server constraints imply those of client **/
 
+    public static boolean verifyAll(String server,String client){
+        List<Expression> clientExprs = new ArrayList<>(Objects.requireNonNull(parseExpressions(client)));
+        List<Expression> serverExprs = new ArrayList<>(Objects.requireNonNull(parseExpressions(server)));
+        try {
+            return verifyAll(serverExprs, clientExprs);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+       return false;
+    }
+
+    /** Will verify if server constraints imply those of client **/
     private static boolean verifyAll(List<Expression> servExpr, List<Expression> clientExprs) throws ParseException {
         double maxVal = findMaxValue(servExpr, clientExprs) + 0.1;
         double minVal = findMinValue(servExpr, clientExprs) - 0.1;
@@ -82,7 +95,7 @@ public class ChocoSolver {
                 clientRealVarMap.put(e.var, model.realVar(e.var, minVal, maxVal, 0.01));
             }
             constraintMap.put("c" + i, model.realIbexGenericConstraint("{0}" + getInverseOp(e.op) + e.value, clientRealVarMap.get(e.var)));
-            clientTreeStr += "c" + i + " " + (e.nextBoolOp != null ? getInverseOp(e.nextBoolOp.charAt(0) + "") : "") + " ";
+            clientTreeStr += "c" + i + " " + (e.nextBoolOp != null ? e.nextBoolOp.charAt(0) : "") + " ";
             i++;
         }
         String serverTreeStr = "";
@@ -97,24 +110,26 @@ public class ChocoSolver {
             i++;
         }
 
-        System.out.println(BooleanEvaluator.makeConstraint(BooleanEvaluator.makeExprFromString(serverTreeStr)));
-        System.out.println(BooleanEvaluator.makeConstraint(BooleanEvaluator.makeExprFromString(clientTreeStr)));
+        //System.out.println(BooleanEvaluator.makeConstraint(BooleanEvaluator.makeExprFromString(serverTreeStr)));
+        //System.out.println(BooleanEvaluator.makeConstraint(BooleanEvaluator.makeExprFromString(clientTreeStr)));
 
-        Constraint constraintServer = makeConstraint(model, constraintMap, BooleanEvaluator.makeExprFromString(serverTreeStr));
-        Constraint constraintClient = makeConstraint(model, constraintMap, BooleanEvaluator.makeExprFromString(clientTreeStr));
+        Constraint constraintServer = makeConstraint(model, constraintMap, BooleanEvaluator.makeExprFromString(serverTreeStr),false);
+        Constraint constraintClient = makeConstraint(model, constraintMap, BooleanEvaluator.makeExprFromString(clientTreeStr),true);
 
         model.and(constraintServer,constraintClient).post();
 
         model.getSolver().limitSolution(10);
         model.getSolver().limitTime(15000);
-        System.out.println(model);
-        for (Solution s : model.getSolver().findAllSolutions()) {
-            System.out.println(s);
+        //System.out.println(model);
+        List<Solution> sols = model.getSolver().findAllSolutions();
+        for (Solution s : sols) {
+            //System.out.println(s);
         }
-        System.out.println("end");
+        //System.out.println("end");
         //  String server = "x > 1.2 && x <3.0";
         //        String client = "x > 1.1 && x <4";
-        return false;
+        //System.out.println("Returning solutions size "+sols.size());
+        return sols.size()==0;
     }
 
     private static String getInverseOp(String op) {
@@ -157,17 +172,21 @@ public class ChocoSolver {
         return i;
     }
 
-    private static Constraint makeConstraint(Model m, Map<String, RealConstraint> cmp, BooleanExpression ast) throws ParseException {
+    private static Constraint makeConstraint(Model m, Map<String, RealConstraint> cmp, BooleanExpression ast, boolean negate) throws ParseException {
         if (ast instanceof Terminal) {
             RealConstraint constraint = cmp.get(ast.toString());
             Variable v = constraint.getPropagators()[0].getVars()[0];
             return constraint;
         }
         if (ast instanceof And) {
-            return m.and(makeConstraint(m, cmp, ((And) ast).getLeft()), makeConstraint(m, cmp, ((And) ast).getRight()));
+            if(negate)
+                return m.or(makeConstraint(m, cmp, ((And) ast).getLeft(), true), makeConstraint(m, cmp, ((And) ast).getRight(), true));
+            return m.and(makeConstraint(m, cmp, ((And) ast).getLeft(), false), makeConstraint(m, cmp, ((And) ast).getRight(), false));
         }
         if (ast instanceof Or) {
-            return m.or(makeConstraint(m, cmp, ((Or) ast).getLeft()), makeConstraint(m, cmp, ((Or) ast).getRight()));
+            if(negate)
+                return m.and(makeConstraint(m, cmp, ((Or) ast).getLeft(), true), makeConstraint(m, cmp, ((Or) ast).getRight(), true));
+            return m.or(makeConstraint(m, cmp, ((Or) ast).getLeft(), false), makeConstraint(m, cmp, ((Or) ast).getRight(), false));
         }
         if (ast instanceof Not) {
             throw new ParseException("Not doesnt seem to work at the moment", 0);
@@ -179,31 +198,6 @@ public class ChocoSolver {
 
 
 
-
-
-        /*
-        Model model = new Model("Environment Generation");
-        System.out.println(model.getName());
-
-
-        //A
-        RealVar x_a = model.realVar("X_a", 0, 3, 0.1);
-        RealVar y_a = model.realVar("Y_a", 0, 3, 0.1);
-
-
-        RealVar cost = model.realVar(0.3);
-        RealVar cost2 = model.realVar(1.3);
-
-        model.post(model.realIbexGenericConstraint("{0}<{1}", x_a, cost));
-        model.post(model.realIbexGenericConstraint("{0}<{1}", x_a, cost2));
-
-
-        while (model.getSolver().solve()) {
-            System.out.println(x_a + " x_a ");
-        }
-
-        return model.getSolver().isFeasible().compareTo(ESat.TRUE) == 0;
-    }*/
 
     private static double findMaxValue(List<Expression> clivarExprs, List<Expression> servvarExprs) {
         double i = -1;
@@ -222,9 +216,8 @@ public class ChocoSolver {
         return i;
     }
 
-    private static List<Expression> getExpressions(String origin) {
+    private static List<Expression> parseExpressions(String origin) {
         String[] res = Arrays.stream(origin.split(String.format(WITH_DELIMITER, "&&|\\|\\|"))).map(String::trim).toArray(String[]::new);
-
         List<Expression> expressionMap = new ArrayList<>();
         Expression lastAdded = null;
         for (String s : res) {
@@ -245,7 +238,7 @@ public class ChocoSolver {
             }
             expressionMap.add(lastAdded);
 
-            System.out.println(equa.length);
+            //System.out.println(equa.length);
 
         }
 
@@ -253,10 +246,14 @@ public class ChocoSolver {
     }
 
     public static void main(String[] args) {
-        some();
+        try {
+            //System.out.println(some());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         //System.out.println(checkImplicationDouble(0, 0, ""));
     }
-
+    //TODO integer checking
     static boolean checkImplicationInteger(int pLimit, int qLimit, String op) {
         Model model = new Model();
 
@@ -265,33 +262,13 @@ public class ChocoSolver {
         Constraint c = model.arithm(ret, op, Y);
         model.not(c).post();
         while (model.getSolver().solve()) {
-            System.out.println(ret);
+            //System.out.println(ret);
         }
         ;
         return model.getSolver().isFeasible().compareTo(ESat.TRUE) == 0;
     }
 
-    static boolean checkImplicationDouble(double pLimit, double qLimit, String op) {
-
-        // x > 3 && y < 4 && y < 1 || x> 2
-        Model model = new Model("Environment Generation");
-        RealVar x_a = model.realVar("X_a", .1d, 4.d, 1.E-1);
-
-        RealConstraint c1 = model.realIbexGenericConstraint("{0} > 0.8;{0} < 3;", x_a);
-        RealConstraint c2 = model.realIbexGenericConstraint("{0} <= 0.7", x_a);
-        RealConstraint c3 = model.realIbexGenericConstraint("{0} >= 4", x_a);
-        model.post(model.and(c1, model.or(c2, c3)));
-
-        model.getSolver().limitSolution(3);
-        System.out.println(model);
-        for (Solution s : model.getSolver().findAllSolutions()) {
-            System.out.println(s);
-        }
-        System.out.println(model.getSolver().getFailCount());
-
-        System.out.println(cst);
-        return model.getSolver().isFeasible().compareTo(ESat.TRUE) == 0;
-    }
+    
 
     static BoolVar cst;
 }
