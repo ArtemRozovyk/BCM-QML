@@ -69,7 +69,7 @@ public interface URIProviderI
 	) //troughput = number of uri per minute
 	public String[]	getURIs(int numberOfURIs) throws Exception ;
 
-	@Pre(expression = "x > 5 && y > 5 ", args = {"a","b"})
+	@Pre(expression = "x > 5 && y > 5  ", args = {"a","b"})
 	@Post("ret < 100 && ret % 2 == 0")
 	int doSomeOperation(int x, int y) throws Exception;
 

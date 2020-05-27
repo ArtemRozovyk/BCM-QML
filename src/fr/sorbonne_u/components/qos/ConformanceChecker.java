@@ -36,7 +36,8 @@ public class ConformanceChecker {
             if (!found) {
                 throw new ConformanceException("Server does not specify global @Require constraint named: " + cr.contractName());
             }
-            //both server and client have a constraint with corresponding name add to contract couples to be verified.
+            //both server and client have a constraint with corresponding name,
+            // add to contract couples to be verified.
             conractCouplesToBeTested.add(new Pair<>(
                     serverDefinedContracts.get(cr.contractName()),
                     clientDefinedContracts.get(cr.contractName())));
@@ -107,11 +108,6 @@ public class ConformanceChecker {
             //QML
 
 
-
-
-
-
-
         }
 
         return verifyAxiomsConformance(methodPostconditions) && verifyAxiomsConformance(methodPostconditions) && verifyQoSConformance(conractCouplesToBeTested);
@@ -148,26 +144,24 @@ public class ConformanceChecker {
         return false;
     }
 
+    public static class Implication {
+
+    }
+
     private static boolean verifyAxiomsConformance(List<Pair<String, String>> methodPostconditions) {
+        //build the list of constrainst and solve it;
+
         System.out.println("hello");
         try {
-
             ScriptEngineManager sem = new ScriptEngineManager();
             ScriptEngine se = sem.getEngineByName("JavaScript");
-            String myExpression = "(3 > 5 && 40 <55) || 5 % 2 == 1";
+            String myExpression = "(x > 5 && y <55) || 5 % 2 == 1";
             System.out.println(se.eval(myExpression));
-
         } catch (ScriptException e) {
-
             System.out.println("Invalid Expression");
             e.printStackTrace();
-
         }
-
-
-
-
-        return false;
+    return false;
     }
 
     private static ContractI contractFromAnnotation(String name, RequireContract requireContractServer) {
