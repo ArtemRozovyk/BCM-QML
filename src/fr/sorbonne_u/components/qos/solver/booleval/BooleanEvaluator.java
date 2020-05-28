@@ -8,7 +8,12 @@ import fr.sorbonne_u.components.qos.solver.booleval.parser.*;
 import java.io.*;
 import java.util.*;
 
+/**
+ * Evaluation of  boolean expression and construction of corresponding AST.
+ */
 public class BooleanEvaluator {
+
+
 	public static void main(String[] args) throws InterruptedException {
 		Scanner sc = new Scanner((System.in));
 		String expression = "";

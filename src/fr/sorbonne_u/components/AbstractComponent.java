@@ -34,12 +34,8 @@ package fr.sorbonne_u.components;
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL-C license and that you accept its terms.
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -320,7 +316,7 @@ implements	ComponentI
 
 
 	/** QoS type of contracts in order to manipulate dimensions **/
-	Map<String, ContractTypeI> contractTypeMap;
+	Map<String, List<ContractI>> contractTypeMap;
 
 
 

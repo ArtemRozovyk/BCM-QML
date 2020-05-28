@@ -31,8 +31,6 @@ public class DynamicConformity implements Translator {
 			}
 			System.out.println(classname);
 		}
-		
-		
 	}
 	
 	//The method start() is called when this event listener is added to a javassist.Loader object by addTranslator()
