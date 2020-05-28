@@ -1,6 +1,5 @@
 package fr.sorbonne_u.components.qos.exemple.basic_cs.Translator;
 
-import fr.sorbonne_u.components.ports.AbstractInboundPort;
 import fr.sorbonne_u.components.ports.AbstractOutboundPort;
 import fr.sorbonne_u.components.qos.ConformanceChecker;
 import javassist.CannotCompileException;
@@ -17,16 +16,15 @@ public class DynamicConformity implements Translator {
 		
 		CtClass CurrentClazz = pool.getCtClass(classname);
 		CtClass abstractOutboundPort = pool.getCtClass(AbstractOutboundPort.class.getCanonicalName());
-		//CtClass abstractComponent = pool.getCtClass(AbstractComponent.class.getCanonicalName());
 		//CtClass abstractInboundPort = pool.getCtClass(AbstractInboundPort.class.getCanonicalName());
 		
-
 		//if the currentClazz is an outboundPort check conformity add DynamicConformityCode with its interfaces
 		if(CurrentClazz.getSuperclass() == abstractOutboundPort){
 			CtClass[]interfaces = CurrentClazz.getInterfaces();
 			for(CtClass IR : interfaces ){
 				try {
-					ConformanceChecker.AddDynamicConformityCode(IR.getClass(), CurrentClazz.getClass(), pool);
+					CurrentClazz.defrost();
+					ConformanceChecker.AddDynamicConformityCode(IR, CurrentClazz);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
