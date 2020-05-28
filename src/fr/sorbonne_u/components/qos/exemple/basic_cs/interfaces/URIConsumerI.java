@@ -63,8 +63,10 @@ public interface URIConsumerI
 			contractType=Performance.class,
 			constraints= {"delay < 4000"}
 	)
+	@Post("ret.length() > 5 && ret.length() < 16")
 	public String getURI() throws Exception ;
 
+	@Pre(expression = "numberOfURIs > 2 && numberOfURIs < 4  ", args = {"a","b"})
 	@RequireContract(
 			contractType=Performance.class,
 			constraints= {"delay < 8000", "troughput > 0.1"}
@@ -72,7 +74,7 @@ public interface URIConsumerI
 	public String[]	getURIs(int numberOfURIs) throws Exception ;
 
 	@Pre(expression = "x > 10 && y > 10 ", args = {"a","b"})
-	@Post("ret < 120 && ret % 2 == 0")
+	@Post("ret < 120 && ret > 5")
 	int doSomeOperation(int x, int y) throws Exception;
 
 	@Require(contractName = "systemRepairability")

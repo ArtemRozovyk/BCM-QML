@@ -38,7 +38,15 @@ public class SolverTesting {
         assertTrue(implies);
         System.err.println("Correct: (" + server + ") -> (" + client + ")");
     }
-
+    /* //TODO find a way to do "!=", since Choco (Ibex) doesnt support the op.
+    @Test
+    public void testCorrectConnection4() {
+        server = "ret < 100 && ret != 0";
+        client = "ret < 120 && ret != 0";
+        boolean implies = ChocoSolver.verifyAll(server, client);
+        assertTrue(implies);
+        System.err.println("Correct: (" + server + ") -> (" + client + ")");
+    }*/
 
 
     @Test
@@ -48,6 +56,22 @@ public class SolverTesting {
         boolean implies = ChocoSolver.verifyAll(server, client);
         assertFalse(implies);
         System.err.println("Wrong : !((" + server + ") -> (" + client + "))");
+    }
+    @Test
+    public void testCorrectConnection5() {
+        server = "ret.length() > 8 && ret.length() < 15";
+        client = "ret.length() > 5 && ret.length() < 16";
+        boolean implies = ChocoSolver.verifyAll(server, client);
+        assertTrue(implies);
+        System.err.println("Correct: (" + server + ") -> (" + client + ")");
+    }@Test
+
+    public void testCorrectConnection6() {
+        server = "x > 10 && y > 10";
+        client = "x > 5 && y > 5";
+        boolean implies = ChocoSolver.verifyAll(server, client);
+        assertTrue(implies);
+        System.err.println("Correct: (" + server + ") -> (" + client + ")");
     }
 
     @Test

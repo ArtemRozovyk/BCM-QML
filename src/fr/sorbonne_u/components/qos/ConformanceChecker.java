@@ -3,6 +3,8 @@ package fr.sorbonne_u.components.qos;
 import fr.sorbonne_u.components.interfaces.*;
 import fr.sorbonne_u.components.qos.annotations.*;
 import fr.sorbonne_u.components.qos.interfaces.*;
+import fr.sorbonne_u.components.qos.solver.*;
+import fr.sorbonne_u.components.qos.solver.booleval.*;
 import javafx.util.*;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -112,58 +114,36 @@ public class ConformanceChecker {
 
         }
 
-        return verifyAxiomsConformance(methodPostconditions) && verifyAxiomsConformance(methodPostconditions) && verifyQoSConformance(conractCouplesToBeTested);
+        return verifyAxiomsConformance(true,methodPreconditions) && verifyAxiomsConformance(false,methodPostconditions) && verifyQoSConformance(conractCouplesToBeTested);
         //try matching the constraints of corresponding global contracts defined by @Require
 
 
     }
 
     private static boolean verifyQoSConformance(List<Pair<ContractI, ContractI>> conractCouplesToBeTested) {
-        /*
-            if (serverContract != null) {
-                Class<? extends ContractTypeI> contractTypeI = clientContract.getType();
-                for (Field f : contractTypeI.getDeclaredFields()) {
-                    Field isIncreasingField = f.getType().getField("IS_INCREASING");
-                    Class<?> bres = isIncreasingField.getType();
-                    boolean isIncreasing;
-                    if (bres == boolean.class) {
-                        isIncreasing = isIncreasingField.getBoolean(null);
-                    }
-                }
-                /*
-                Field isIncrFidl  = contractTypeI.getField("IS_INCREASING");
-                Class<?> bres = isIncrFidl.getType();
-                if(bres == boolean.class){
-                    System.out.println(field.getBoolean(null));
-                }
-            } else {
-                throw new ConformanceException("The server doesnt not define " + clientContract.getName());
-            }
-        }
-
-*/
-
-        return false;
+        //FIXME come on, do it
+        return true;
     }
 
     public static class Implication {
 
     }
 
-    private static boolean verifyAxiomsConformance(List<Pair<String, String>> methodPostconditions) {
+    private static boolean verifyAxiomsConformance(boolean pre,List<Pair<String, String>> axiomCouples) {
         //build the list of constrainst and solve it;
-
-        System.out.println("hello");
-        try {
-            ScriptEngineManager sem = new ScriptEngineManager();
-            ScriptEngine se = sem.getEngineByName("JavaScript");
-            String myExpression = "(x > 5 && y <55) || 5 % 2 == 1";
-            System.out.println(se.eval(myExpression));
-        } catch (ScriptException e) {
-            System.out.println("Invalid Expression");
-            e.printStackTrace();
+        for(Pair<String,String> p : axiomCouples){
+            if (pre){
+                if(!ChocoSolver.verifyAll(p.getValue(),p.getKey())){
+                    return false;
+                }
+            }else{
+                if(!ChocoSolver.verifyAll(p.getKey(),p.getValue())){
+                    return false;
+                }
+            }
         }
-    return false;
+
+        return true;
     }
 
     private static ContractI contractFromAnnotation(String name, RequireContract requireContractServer) {

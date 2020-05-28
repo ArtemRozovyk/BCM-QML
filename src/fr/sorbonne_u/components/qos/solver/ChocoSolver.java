@@ -15,7 +15,7 @@ import java.util.*;
 
 public class ChocoSolver {
 
-
+    public static boolean IS_DEBUG = true;
     public static boolean checkImplication(Expression servExpr, Expression clientExpr) {
 
 
@@ -92,9 +92,17 @@ public class ChocoSolver {
         String clientTreeStr = "";
         for (Expression e : clientExprs) {
             if (!clientRealVarMap.containsKey(e.var)) {
-                clientRealVarMap.put(e.var, model.realVar(e.var, minVal, maxVal, 0.01));
+                clientRealVarMap.put(e.var, model.realVar(e.var, minVal, maxVal, 0.0001));
             }
-            constraintMap.put("c" + i, model.realIbexGenericConstraint("{0}" + getInverseOp(e.op) + e.value, clientRealVarMap.get(e.var)));
+            String operator = getInverseOp(e.op);
+            String function=null;
+            if(!operator.equals("!=")){
+                function = "{0}" + operator + e.value ;
+            }else {
+                function = "{0}=/="+e.value; //TODO doesnt work
+            }
+
+            constraintMap.put("c" + i, model.realIbexGenericConstraint(function, clientRealVarMap.get(e.var)));
             clientTreeStr += "c" + i + " " + (e.nextBoolOp != null ? e.nextBoolOp.charAt(0) : "") + " ";
             i++;
         }
@@ -102,10 +110,16 @@ public class ChocoSolver {
         for (Expression e : servExpr) {
 
             if (!clientRealVarMap.containsKey(e.var)) {
-                clientRealVarMap.put(e.var, model.realVar(e.var, minVal, maxVal, 0.01));
+                clientRealVarMap.put(e.var, model.realVar(e.var, minVal>=0?minVal:0, maxVal, 0.01));
             }//inverse operators due to bugged not ?
-
-            constraintMap.put("c" + i, model.realIbexGenericConstraint("{0}" + e.op + e.value, clientRealVarMap.get(e.var)));
+            String operator = e.op.equals("==")?"=":e.op;
+            String function;
+            if(!operator.equals("!=")){
+                function = "{0}" + operator + e.value ;
+            }else {
+                function = "{0}=/="+e.value; //TODO doesnt work
+            }
+            constraintMap.put("c" + i, model.realIbexGenericConstraint(function, clientRealVarMap.get(e.var)));
             serverTreeStr += "c" + i + " " + (e.nextBoolOp != null ? e.nextBoolOp.charAt(0) : "") + " ";
             i++;
         }
@@ -121,15 +135,20 @@ public class ChocoSolver {
 
         model.getSolver().limitSolution(10);
         model.getSolver().limitTime(15000);
-        //System.out.println(model);
-        List<Solution> sols = model.getSolver().findAllSolutions();
-        for (Solution s : sols) {
-            //System.out.println(s);
+        if(IS_DEBUG){
+            System.out.println(model);
         }
+        List<Solution> sols = model.getSolver().findAllSolutions();
+        if(IS_DEBUG){
+            for (Solution s : sols) {
+                System.out.println(s);
+            }
+            System.out.println("Returning solutions size "+sols.size());
+        }
+
         //System.out.println("end");
         //  String server = "x > 1.2 && x <3.0";
         //        String client = "x > 1.1 && x <4";
-        //System.out.println("Returning solutions size "+sols.size());
         return sols.size()==0;
     }
 
@@ -146,8 +165,8 @@ public class ChocoSolver {
                 return "<";
             case "==":
                 return "!=";
-            case ":=":
-                return "==";
+            case "!=":
+                return "=";
             case "&":
                 return "|";
             case "|":
