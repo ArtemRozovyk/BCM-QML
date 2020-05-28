@@ -15,7 +15,7 @@ import java.util.*;
 
 public class ChocoSolver {
 
-    public static boolean IS_DEBUG = true;
+    public static boolean IS_DEBUG = false;
     public static boolean checkImplication(Expression servExpr, Expression clientExpr) {
 
 

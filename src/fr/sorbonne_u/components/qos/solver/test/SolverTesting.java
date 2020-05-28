@@ -16,7 +16,7 @@ public class SolverTesting {
     @Test
     public void testCorrectConnection1() {
         server = "x > 1.4 && x <3";
-        client = "x > 1.3 && x <3.1";
+        client = "x > 1.3 && x <300000000";
         boolean implies = ChocoSolver.verifyAll(server, client);
         assertTrue(implies);
         System.err.println("Correct: (" + server + ") -> (" + client + ")");

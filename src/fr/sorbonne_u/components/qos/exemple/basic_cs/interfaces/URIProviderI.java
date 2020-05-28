@@ -67,7 +67,7 @@ public interface URIProviderI
 	@Pre(expression = "numberOfURIs > 1 && numberOfURIs < 5 ", args = {"a","b"})
 	@RequireContract(
 			contractType=Performance.class,
-			constraints= {"delay < 7000", "troughput > 0.13"}
+			constraints= {"delay < 7000", "throughput > 0.13"}
 	) //troughput = number of uri per minute
 	public String[]	getURIs(int numberOfURIs) throws Exception ;
 

@@ -1,5 +1,6 @@
 package fr.sorbonne_u.components.qos;
 
+import fr.sorbonne_u.components.qos.dimensions.*;
 import fr.sorbonne_u.components.qos.interfaces.*;
 
 import java.util.*;

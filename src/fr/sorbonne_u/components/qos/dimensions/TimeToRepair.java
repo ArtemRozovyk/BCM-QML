@@ -1,20 +1,21 @@
-package fr.sorbonne_u.components.qos;
-
+package fr.sorbonne_u.components.qos.dimensions;
 
 import fr.sorbonne_u.components.qos.interfaces.*;
 
-public class Delay implements DimensionI {
+public class TimeToRepair implements DimensionI {
 
-    long delay;
+    long secondsToRepair;
 
     public static final boolean IS_INCREASING = false;
 
-    public Delay(long delay){
-        this.delay=delay;
+
+    public TimeToRepair(long secToRepair){
+        this.secondsToRepair=secToRepair;
     }
+
     @Override
     public Object getValue() {
-        return delay;
+        return secondsToRepair;
     }
 
     @Override

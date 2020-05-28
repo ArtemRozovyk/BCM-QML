@@ -1,22 +1,19 @@
-package fr.sorbonne_u.components.qos;
+package fr.sorbonne_u.components.qos.dimensions;
 
 import fr.sorbonne_u.components.qos.interfaces.*;
 
-/**persentage of time that component is available throught the year **/
-public class Availability implements DimensionI {
-
-    double availability;
+public class Throughput implements DimensionI {
+    double throughput;
 
     public static final boolean IS_INCREASING = true;
 
 
-    public Availability(double a){
-        this.availability=a;
+    public Throughput (double val){
+        this.throughput=val;
     }
-
     @Override
     public Object getValue() {
-        return availability;
+        return null;
     }
 
     @Override

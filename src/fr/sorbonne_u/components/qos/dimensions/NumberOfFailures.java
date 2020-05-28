@@ -1,4 +1,4 @@
-package fr.sorbonne_u.components.qos;
+package fr.sorbonne_u.components.qos.dimensions;
 
 import fr.sorbonne_u.components.qos.interfaces.*;
 
