@@ -35,11 +35,18 @@ package fr.sorbonne_u.components.qos.exemple.basic_cs.interfaces;
 //knowledge of the CeCILL-C license and that you accept its terms.
 
 import fr.sorbonne_u.components.interfaces.*;
-import fr.sorbonne_u.components.qos.*;
 import fr.sorbonne_u.components.qos.annotations.*;
+import fr.sorbonne_u.components.qos.qml.cttypes.*;
 
 //-----------------------------------------------------------------------------
 
+
+@ContractDefinition(
+		name = "systemRepairability",
+		type = Reliability.class,
+		constraints=
+				{"timeToRepair < 800"}
+)
 @ContractDefinition(
 		name = "systemReliability",
 		type= Reliability.class,
@@ -47,31 +54,25 @@ import fr.sorbonne_u.components.qos.annotations.*;
 				{"numberOfFailures < 5",
 						"availability > 0.9"}
 )
-@ContractDefinition(
-		name = "systemRepairability",
-		type = Reliability.class,
-		constraints=
-				{"timeToRepair < 800"}
-)
 @Require(contractName = "systemReliability") //for each method.
 public interface URIProviderI
 		extends OfferedI
 {
 	@RequireContract(
-			contractType=Performance.class,
+			contractType= Performance.class,
 			constraints= {"delay < 3000"}
 	)
 	@Post("ret.length() > 8 && ret.length() < 15")
 	public String getURI() throws Exception ;
 
-	@Pre(expression = "numberOfURIs > 1 && numberOfURIs < 5 ", args = {"a","b"})
+	@Pre(expression = "numberOfURIs > 1 && numberOfURIs < 6 ")
 	@RequireContract(
 			contractType=Performance.class,
 			constraints= {"delay < 7000", "throughput > 0.13"}
 	) //troughput = number of uri per minute
 	public String[]	getURIs(int numberOfURIs) throws Exception ;
 
-	@Pre(expression = "x > 5 && y > 5  ", args = {"a","b"})
+	@Pre(expression = "x > 5 && y > 5  ")
 	@Post("ret < 100 && ret > 10")
 	int doSomeOperation(int x, int y) throws Exception;
 

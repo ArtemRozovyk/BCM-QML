@@ -13,18 +13,17 @@ import java.security.*;
 import java.text.*;
 import java.util.*;
 
+/**
+ * This class purpose is to verify the implication of boolean expressions.
+ */
 public class ChocoSolver {
 
     public static boolean IS_DEBUG = false;
-    public static boolean checkImplication(Expression servExpr, Expression clientExpr) {
-
-
-        return false;
-    }
-
     static public final String WITH_DELIMITER = "((?<=%1$s)|(?=%1$s))";
 
-
+    /**
+     * Holder class that represent parsed boolean expression
+     */
     static class Expression {
         String var;
         String op;
@@ -49,26 +48,7 @@ public class ChocoSolver {
     }
 
 
-    static boolean some() throws Exception {
-        String server = "x > 1.4 && x <3.0";
-        String client = "x > 1.3 && x <3.1";
-        List<Expression> clientExprs = new ArrayList<>(Objects.requireNonNull(parseExpressions(client)));
-        List<Expression> serverExprs = new ArrayList<>(Objects.requireNonNull(parseExpressions(server)));
-
-        try {
-           return verifyAll(serverExprs, clientExprs);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-       throw new Exception("someExp");
-
-        //System.out.println(clientExprs.size());
-        //System.out.println(serverExprs.size());
-
-
-    }
     /** Will parse the strings verify if server constraints imply those of client **/
-
     public static boolean verifyAll(String server,String client){
         List<Expression> clientExprs = new ArrayList<>(Objects.requireNonNull(parseExpressions(client)));
         List<Expression> serverExprs = new ArrayList<>(Objects.requireNonNull(parseExpressions(server)));
@@ -80,7 +60,15 @@ public class ChocoSolver {
        return false;
     }
 
-    /** Will verify if server constraints imply those of client **/
+
+    /**
+     * Entring point of Choco solver
+     * Will verify if server expressons imply those of client
+     * @param servExpr server expressions
+     * @param clientExprs client expressions
+     * @return serverExprs imply clientExprs
+     * @throws ParseException
+     */
     private static boolean verifyAll(List<Expression> servExpr, List<Expression> clientExprs) throws ParseException {
         double maxVal = findMaxValue(servExpr, clientExprs) + 0.1;
         double minVal = findMinValue(servExpr, clientExprs) - 0.1;
@@ -123,18 +111,13 @@ public class ChocoSolver {
             serverTreeStr += "c" + i + " " + (e.nextBoolOp != null ? e.nextBoolOp.charAt(0) : "") + " ";
             i++;
         }
-
-        //System.out.println(BooleanEvaluator.makeConstraint(BooleanEvaluator.makeExprFromString(serverTreeStr)));
-        //System.out.println(BooleanEvaluator.makeConstraint(BooleanEvaluator.makeExprFromString(clientTreeStr)));
-
-        Constraint constraintServer = makeConstraint(model, constraintMap, BooleanEvaluator.makeExprFromString(serverTreeStr),false);
+        Constraint constraintServer = makeConstraint(model, constraintMap, BooleanEvaluator.makeExprFromString(serverTreeStr), false);
         Constraint constraintClient = makeConstraint(model, constraintMap, BooleanEvaluator.makeExprFromString(clientTreeStr),true);
-        //System.out.println(BooleanEvaluator.makeExprFromString(clientTreeStr));
-        //System.out.println(BooleanEvaluator.makeConstraintN(BooleanEvaluator.makeExprFromString(clientTreeStr)));
         model.and(constraintServer,constraintClient).post();
 
         model.getSolver().limitSolution(10);
         model.getSolver().limitTime(15000);
+
         if(IS_DEBUG){
             System.out.println(model);
         }
@@ -145,13 +128,14 @@ public class ChocoSolver {
             }
             System.out.println("Returning solutions size "+sols.size());
         }
-
-        //System.out.println("end");
-        //  String server = "x > 1.2 && x <3.0";
-        //        String client = "x > 1.1 && x <4";
         return sols.size()==0;
     }
 
+    /**
+     * Inverse the operator
+     * @param op operator
+     * @return it's inverse
+     */
     private static String getInverseOp(String op) {
 
         switch (op) {
@@ -175,6 +159,12 @@ public class ChocoSolver {
         return "errorInversing";
     }
 
+    /**
+     *  Finding min value in both server and client expressions
+     * @param servExpr server expressions
+     * @param clientExprs client expression
+     * @return min value found
+     */
     private static double findMinValue(List<Expression> servExpr, List<Expression> clientExprs) {
         double i = Double.MAX_VALUE;
         for (Expression e : clientExprs) {
@@ -192,7 +182,18 @@ public class ChocoSolver {
         return i;
     }
 
+    /**
+     * Boolean AST walk to construct analogue Choco tree
+     * or the inverse of it, due to specific needs
+     * @param m Choco model that constructs the constraint
+     * @param cmp Map of terminal values that already represent Choco constraints
+     * @param ast Boolean tree
+     * @param negate do you want inverse or & and ?
+     * @return the Choco constraint ready to be solved
+     * @throws ParseException
+     */
     private static Constraint makeConstraint(Model m, Map<String, RealConstraint> cmp, BooleanExpression ast, boolean negate) throws ParseException {
+        //TODO the wierd out prints (At least one constraint is free) is due to this method.
         if (ast instanceof Terminal) {
             RealConstraint constraint = cmp.get(ast.toString());
             Variable v = constraint.getPropagators()[0].getVars()[0];
@@ -217,8 +218,12 @@ public class ChocoSolver {
     }
 
 
-
-
+    /**
+     *  Finding max value in both server and client expressions
+     * @param servvarExprs server expressions
+     * @param clivarExprs client expression
+     * @return max value found
+     */
     private static double findMaxValue(List<Expression> clivarExprs, List<Expression> servvarExprs) {
         double i = -1;
         for (Expression e : clivarExprs) {
@@ -236,6 +241,12 @@ public class ChocoSolver {
         return i;
     }
 
+    /**
+     * Parse the boolean expression verifying its correction
+     * and refuting some broken posibilities
+     * @param origin original expression string as stated in the interface
+     * @return list of holder expression instances
+     */
     private static List<Expression> parseExpressions(String origin) {
         String[] res = Arrays.stream(origin.split(String.format(WITH_DELIMITER, "&&|\\|\\|"))).map(String::trim).toArray(String[]::new);
         List<Expression> expressionMap = new ArrayList<>();
@@ -258,22 +269,12 @@ public class ChocoSolver {
             }
             expressionMap.add(lastAdded);
 
-            //System.out.println(equa.length);
-
         }
-
         return expressionMap;
     }
 
-    public static void main(String[] args) {
-        try {
-            //System.out.println(some());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        //System.out.println(checkImplicationDouble(0, 0, ""));
-    }
-    //TODO integer checking
+    //TODO can be faster if we use integer checked instead of the real one
+    //if the expression contains only integer values.
     static boolean checkImplicationInteger(int pLimit, int qLimit, String op) {
         Model model = new Model();
 
@@ -284,11 +285,8 @@ public class ChocoSolver {
         while (model.getSolver().solve()) {
             //System.out.println(ret);
         }
-        ;
         return model.getSolver().isFeasible().compareTo(ESat.TRUE) == 0;
     }
 
-    
 
-    static BoolVar cst;
 }

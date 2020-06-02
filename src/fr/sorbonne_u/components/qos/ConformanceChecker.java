@@ -1,18 +1,12 @@
 package fr.sorbonne_u.components.qos;
 
-import com.sun.tools.javac.util.*;
-import com.sun.xml.internal.ws.util.StringUtils;
 import fr.sorbonne_u.components.interfaces.*;
 import fr.sorbonne_u.components.qos.annotations.*;
-import fr.sorbonne_u.components.qos.interfaces.*;
+import fr.sorbonne_u.components.qos.qml.interfaces.*;
 import fr.sorbonne_u.components.qos.solver.*;
-import fr.sorbonne_u.components.qos.solver.booleval.*;
-import javafx.util.*;
 import javafx.util.Pair;
 import javassist.*;
 
-import javax.script.*;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.List;
@@ -21,12 +15,23 @@ import static fr.sorbonne_u.components.qos.solver.ChocoSolver.WITH_DELIMITER;
 
 public class ConformanceChecker {
 
-
+    /**
+     * Entering point of solving the constraints declared in the interfaces
+     * of two components that are about to be connected.
+     * @param clientI
+     * @param serverI
+     * @return true if two interfaces can be connecter together
+     * @throws NoSuchMethodException
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws ConformanceException
+     * @throws IllegalStrengthException
+     */
     public static boolean conformanceVerification(Class<?>[] clientI, Class<?>[] serverI) throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException, ConformanceException, IllegalStrengthException {
 
         //TODO multiple interfaces implemented by port or connector
-        Class<? extends RequiredI> client = (Class<? extends RequiredI>) clientI[0];
-        Class<? extends RequiredI> server = (Class<? extends RequiredI>) serverI[0];
+        Class<? extends ComponentServiceI> client = (Class<? extends ComponentServiceI>) clientI[0];
+        Class<? extends ComponentServiceI> server = (Class<? extends ComponentServiceI>) serverI[0];
 
         //keep trace of all contracts that have been defined in both interfaces
         Map<String, ContractI> serverDefinedContracts = new HashMap<>(getContractDefinitionsFromClass(server));
@@ -44,7 +49,8 @@ public class ConformanceChecker {
                 }
             }
             if (!found) {
-                throw new ConformanceException("Server does not specify global @Require constraint named: " + cr.contractName());
+                throw new ConformanceException("Server does not specify global " +
+                        "@Require constraint named: " + cr.contractName());
             }
             //both server and client have a constraint with corresponding name,
             // add to contract couples to be verified.
@@ -113,15 +119,22 @@ public class ConformanceChecker {
 
             } catch (NoSuchMethodException ignored) {
             }
-            //QML
         }
-        return verifyAxiomsConformance(true, methodPreconditions) && verifyAxiomsConformance(false, methodPostconditions) && verifyQoSConformance(conractCouplesToBeTested);
-        //try matching the constraints of corresponding global contracts defined by @Require
+        return verifyAxiomsConformance(true, methodPreconditions)
+                && verifyAxiomsConformance(false, methodPostconditions)
+                && verifyQoSConformance(conractCouplesToBeTested);
     }
 
-
+    /**
+     * Check if expressions are written according to strength of the dimensions
+     * and combine them with && operator to be tested by Choco
+     *
+     * @param conractCouplesToBeTested contract couples in order (server,client)
+     * @return qml profiles are conforming
+     * @throws IllegalStrengthException
+     * @throws ConformanceException
+     */
     private static boolean verifyQoSConformance(List<Pair<ContractI, ContractI>> conractCouplesToBeTested) throws IllegalStrengthException, ConformanceException {
-        //FIXME come on, do it
         List<Pair<String,String >> cplsToBeTested = new ArrayList<>();
         for (Pair<ContractI,ContractI> contractIPair : conractCouplesToBeTested){
             ContractI serverContract = contractIPair.getKey();
@@ -145,15 +158,8 @@ public class ConformanceChecker {
                 }
             }
             cplsToBeTested.add(new Pair<>(sc.toString(),cc.toString()));
-
-
-
-
-            System.out.println(contractIPair.getKey().getName());
-            System.out.println(contractIPair.getValue().getName());
         }
-        verifyAxiomsConformance(false,cplsToBeTested);
-        return true;
+        return  verifyAxiomsConformance(false,cplsToBeTested);
     }
 
     /**
@@ -199,7 +205,14 @@ public class ConformanceChecker {
     }
 
 
-
+    /**
+     * Assures the order of passing to choco,
+     * (client,server) for pre conditions
+     * (server,client) for post conditions
+     * @param pre  preconditions are being considered
+     * @param axiomCouples initial order is (server,client)
+     * @return axioms are conformign
+     */
     private static boolean verifyAxiomsConformance(boolean pre, List<Pair<String, String>> axiomCouples) {
         //build the list of constrainst and solve it;
         for (Pair<String, String> p : axiomCouples) {
@@ -217,18 +230,22 @@ public class ConformanceChecker {
         return true;
     }
 
+    /**
+     * Utilitary contractFrom annotation
+     * @param name name of contract
+     * @param requireContractServer Declaration of contract
+     * @return The instance of ContractI with corresponding values.
+     */
     private static ContractI contractFromAnnotation(String name, RequireContract requireContractServer) {
         return new ContractI() {
             @Override
             public String getName() {
                 return name;
             }
-
             @Override
             public Class<? extends ContractTypeI> getType() {
                 return requireContractServer.contractType();
             }
-
             @Override
             public String[] getConstraints() {
                 return requireContractServer.constraints();
@@ -236,15 +253,19 @@ public class ConformanceChecker {
         };
     }
 
-
-    static Require[] getRequireFromClass(Class<? extends RequiredI> itClass) {
+    /**
+     * Utilitary
+     * @param itClass Interfaces class containing the constraints
+     * @return all the require clauses in the class
+     */
+    static Require[] getRequireFromClass(Class<? extends ComponentServiceI> itClass) {
         return itClass.getAnnotation(Require.class) == null ?
                 itClass.getAnnotation(Require.List.class).value() :
                 new Require[]{itClass.getAnnotation(Require.class)};
     }
 
 
-    private static Map<? extends String, ? extends ContractI> getContractDefinitionsFromClass(Class<? extends RequiredI> clazz) {
+    private static Map<? extends String, ? extends ContractI> getContractDefinitionsFromClass(Class<? extends ComponentServiceI> clazz) {
         Map<String, ContractI> res = new HashMap<String, ContractI>();
         ContractDefinition[] clientContractDefs =
                 clazz.getAnnotation(ContractDefinition.class) == null ?
@@ -272,110 +293,6 @@ public class ConformanceChecker {
         return res;
     }
 
-
-    public static void AddDynamicConformityCode(CtClass IR, CtClass outboundPort) throws Exception {
-
-        //get the interface super classes
-        ArrayList<CtClass> superClasses = getAllSuperClasses(IR);
-
-        //get the interface Annotations
-        Object[] interfaceAnnotations = IR.getAnnotations();
-
-        //get all the methods of the interface
-        CtMethod[] methodsIR = IR.getDeclaredMethods();
-
-        //store the contract definitions and the required contract names (the once which are required for all the methods of the interface)
-        ContractDefinition[] contractDefinitionList ;
-        List<String> require = new ArrayList<String>();
-
-        //for each interface annotation do whatever ...
-        for(Object annotation : interfaceAnnotations ){
-
-            if(annotation instanceof ContractDefinition.List){
-                contractDefinitionList = ((ContractDefinition.List)annotation).value();
-            }
-            else if(annotation instanceof Require){
-                for (CtMethod mIR : methodsIR) {
-                    require.add(((Require)annotation).contractName());
-                }
-            }
-        }
-
-        //for each method of the interface get its annotations and add the proper verification code in the matching class method
-        for (CtMethod mIR : methodsIR) {
-
-            Object[] methodAnnotations = mIR.getAnnotations();
-            CtMethod cm = outboundPort.getDeclaredMethod(mIR.getName(), mIR.getParameterTypes());
-
-            //for each annotation add the proper code verification
-            for(Object annotation : methodAnnotations ){
-
-                if(annotation instanceof Pre){
-                    String expression;
-                    //interface super classes code injection
-                    for(int i = superClasses.size() -1 ; 0 > superClasses.size(); i--){
-                        try {
-                            CtMethod scm = superClasses.get(i).getDeclaredMethod(mIR.getName(), mIR.getParameterTypes());
-                            Pre anno = (Pre) scm.getAnnotation(Pre.class);
-                            expression = anno.expression();
-                        } catch (NotFoundException e) {
-                            continue;
-                        }
-                        cm.insertBefore("if (!(" + expression + "))" + "throw new IllegalArgumentException();");
-                    }
-                    //interface code injection
-                    expression = ((Pre)annotation).expression();
-                    cm.insertBefore("if (!(" + expression + "))" + "throw new IllegalArgumentException();");
-                }
-                else if(annotation instanceof Post){
-                    //interface code injection
-                    String expression = ((Post)annotation).value();
-                    expression = expression.replaceAll("\\b" + "ret" + "\\b", "\\$_"); //needs to be done properly (java parser ?? ...)
-                    cm.insertAfter("if (!(" + expression + "))" + "throw new IllegalArgumentException();");
-                    //interface super classes code injection
-                    for(CtClass superClass : superClasses){
-                        CtMethod scm;
-                        try {
-                            scm = superClass.getDeclaredMethod(mIR.getName(), mIR.getParameterTypes());
-                            Post anno = (Post) scm.getAnnotation(Post.class);
-                            expression = anno.value();
-                        } catch (NotFoundException e) {
-                            continue;
-                        }
-                        expression = expression.replaceAll("\\b" + "ret" + "\\b", "\\$_"); //needs to be done properly (java parser ?? ...)
-                        cm.insertAfter("if (!(" + expression + "))" + "throw new IllegalArgumentException();");
-                    }
-                } else if (annotation instanceof Require){
-                    String contractName = ((Require)annotation).contractName();
-                    //to do ...
-                } else if (annotation instanceof RequireContract){
-                    //to do ...
-                }
-            }
-
-        }
-        outboundPort.writeFile();
-    }
-
-    public static ArrayList<CtClass> getAllSuperClasses(CtClass clazz) throws NotFoundException {
-
-        ArrayList<CtClass> res = new ArrayList<CtClass>();
-
-        while (!"java.lang.Object".equals(clazz.getName())) {
-
-            // Get the super class
-            CtClass superClass = clazz.getSuperclass();
-
-            // Add the super class
-            res.add(superClass);
-
-            // Now inspect the superclass
-            clazz = superClass;
-
-        }
-
-        return res;
-    }
     public static boolean isNumeric(String strNum) {
         if (strNum == null) {
             return false;

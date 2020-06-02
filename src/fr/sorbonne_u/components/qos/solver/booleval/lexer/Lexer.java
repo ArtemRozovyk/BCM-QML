@@ -18,13 +18,9 @@ public class Lexer {
 	public static final int NOT = 3;
 
 	public static final int TRUE = 4;
-	public static final int FALSE = 5;
-
 	public static final int LEFT = 6;
 	public static final int RIGHT = 7;
 
-	public static final String TRUE_LITERAL = "true";
-	public static final String FALSE_LITERAL = "false";
 
 	public Lexer(InputStream in) {
 		Reader r = new BufferedReader(new InputStreamReader(in));
@@ -61,7 +57,6 @@ public class Lexer {
 						lastWord=input.sval;
 						symbol = TRUE;
 					}
-					else if (input.sval.equalsIgnoreCase(FALSE_LITERAL)) symbol = FALSE;
 					break;
 				}
 				case '(':

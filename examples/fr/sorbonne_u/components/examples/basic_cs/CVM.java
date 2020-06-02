@@ -41,7 +41,6 @@ import fr.sorbonne_u.components.examples.basic_cs.components.URIProvider;
 import fr.sorbonne_u.components.examples.basic_cs.connectors.URIServiceConnector;
 import fr.sorbonne_u.components.interfaces.*;
 import fr.sorbonne_u.components.qos.*;
-import org.reflections.*;
 
 import java.net.*;
 import java.util.*;

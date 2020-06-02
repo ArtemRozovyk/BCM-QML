@@ -35,7 +35,6 @@ package fr.sorbonne_u.components.ports;
 //knowledge of the CeCILL-C license and that you accept its terms.
 
 import java.lang.reflect.*;
-import java.util.*;
 
 import fr.sorbonne_u.components.AbstractPort;
 import fr.sorbonne_u.components.ComponentI;
@@ -363,6 +362,15 @@ public abstract class AbstractOutboundPort
                 new PostconditionException("this.connected()");
     }
 
+
+
+
+
+    //void addConstraint(ContractI c,Method m) {
+    // if(contractsMap.containt(m) then getList l , add to List
+    // this.owner.contractsMap.put(m,l) ET  sinon new List<ContractI>() a, a.add(c) ,
+    // this.owner.contractsMap.put(m,a)
+
     /**
      * @see fr.sorbonne_u.components.AbstractPort#doMyConnection(java.lang.String, fr.sorbonne_u.components.connectors.ConnectorI)
      */
@@ -389,11 +397,14 @@ public abstract class AbstractOutboundPort
 
         Class<?>[] clientI = connector.getClass().getInterfaces();
         Class<?>[] serverI = serverPort.getClass().getInterfaces();
+/*
         try {
-            if (!ConformanceChecker.conformanceVerification(clientI, serverI)) throw new RuntimeException("Not conforming interfaces");
+            if (!ConformanceChecker.conformanceVerification(clientI, serverI))
+                throw new RuntimeException("Not conforming interfaces");
         } catch (ConformanceException e) {
             e.printStackTrace();
         }
+*/
 
         if (serverPort == null && AbstractCVM.isDistributed) {
             this.isRemotelyConnected = true;

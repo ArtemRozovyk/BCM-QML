@@ -38,9 +38,13 @@ import fr.sorbonne_u.components.*;
 import fr.sorbonne_u.components.annotations.*;
 import fr.sorbonne_u.components.cvm.*;
 import fr.sorbonne_u.components.exceptions.*;
+import fr.sorbonne_u.components.qos.*;
 import fr.sorbonne_u.components.qos.exemple.basic_cs.interfaces.*;
 import fr.sorbonne_u.components.qos.exemple.basic_cs.ports.*;
+import fr.sorbonne_u.components.qos.qml.interfaces.*;
 
+import java.lang.reflect.*;
+import java.util.*;
 import java.util.concurrent.*;
 
 //-----------------------------------------------------------------------------
@@ -138,26 +142,40 @@ extends		AbstractComponent
 	 *
 	 * @throws Exception	<i>todo.</i>
 	 */
+	double available ;
+
 	public void			getURIandPrint() throws Exception
 	{
+
 		this.counter++ ;
 		if (this.counter <= 10) {
 			// Get the next URI and print it
+			//List<ContractI> c  = getCorrespondingContracts(uriGetterPort.getClass(), "getURI");
+			//List<ContractI> c = getContractType(uriGetterPort.getClass().getMethod("getURIs",Integer.class));
+			//c[0].available > this.available else throw Excption ; //CEST PAS NOTRE JOB !
+			try{
+
 			String uri = this.uriGetterPort.getURI() ;
 			this.logMessage("consumer getting a new URI no "
 							+ this.counter + ": " + uri + ".") ;
 
 			// Get a set of new URIs and print them
-			String[] uris = this.uriGetterPort.getURIs(URIConsumer.N) ;
-			StringBuffer mes = new StringBuffer() ;
-			for (int i = 0; i < URIConsumer.N ; i++) {
-				mes.append(uris[i]) ;
-				if (i < URIConsumer.N - 1) {
-					mes.append(", ") ;
+
+				String[] uris = this.uriGetterPort.getURIs(URIConsumer.N) ;
+				StringBuffer mes = new StringBuffer() ;
+				for (int i = 0; i < URIConsumer.N ; i++) {
+					mes.append(uris[i]) ;
+					if (i < URIConsumer.N - 1) {
+						mes.append(", ") ;
+					}
 				}
+
+				this.logMessage("consumer getting a new set of URIs no "
+						+ this.counter + " [" + mes + "].") ;
+			}catch (Exception e){
+				e.printStackTrace();
 			}
-			this.logMessage("consumer getting a new set of URIs no "
-							+ this.counter + " [" + mes + "].") ;
+
 
 			// Schedule the next service method invocation in one second.
 			// All tasks and services of a component must be called through
@@ -216,6 +234,16 @@ extends		AbstractComponent
 				}
 			},
 			1000, TimeUnit.MILLISECONDS);
+		try {
+			Method method = URIConsumerI.class.getMethod("getURIs", new Class[] {int.class});
+			List<ContractI> contrats = this.getContract(method);
+
+			System.out.println(contrats.get(0).getName());
+			System.out.println(contrats.get(1).getName());
+
+		} catch (Exception | NoSuchContractTypeException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**

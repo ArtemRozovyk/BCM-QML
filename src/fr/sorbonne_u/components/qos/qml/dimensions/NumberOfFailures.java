@@ -1,8 +1,6 @@
-package fr.sorbonne_u.components.qos.dimensions;
+package fr.sorbonne_u.components.qos.qml.dimensions;
 
-import fr.sorbonne_u.components.qos.interfaces.*;
-
-import javax.script.*;
+import fr.sorbonne_u.components.qos.qml.interfaces.*;
 
 public class NumberOfFailures implements DimensionI {
 

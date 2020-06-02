@@ -35,8 +35,8 @@ package fr.sorbonne_u.components.qos.exemple.basic_cs.interfaces;
 //knowledge of the CeCILL-C license and that you accept its terms.
 
 import fr.sorbonne_u.components.interfaces.*;
-import fr.sorbonne_u.components.qos.*;
 import fr.sorbonne_u.components.qos.annotations.*;
+import fr.sorbonne_u.components.qos.qml.cttypes.*;
 
 //-----------------------------------------------------------------------------
 
@@ -60,20 +60,21 @@ public interface URIConsumerI
 {
 
 	@RequireContract(
-			contractType=Performance.class,
+			contractType= Performance.class,
 			constraints= {"delay < 4000"}
 	)
-	@Post("ret.length() > 5 && ret.length() < 16")
+	@Post("ret != null")
+	//@Post("ret.length() > 5 && ret.length() < 16")
 	public String getURI() throws Exception ;
-
-	@Pre(expression = "numberOfURIs > 2 && numberOfURIs < 4  ", args = {"a","b"})
+	@Pre(expression = "numberOfURIs > 1 && numberOfURIs < 4")
+	//@Pre(expression = "numberOfURIs > 2 && numberOfURIs < 5")
 	@RequireContract(
 			contractType=Performance.class,
 			constraints= {"delay < 8000", "throughput > 0.1"}
 	) //troughput = number of uri per minute
 	public String[]	getURIs(int numberOfURIs) throws Exception ;
 
-	@Pre(expression = "x > 10 && y > 10 ", args = {"a","b"})
+	@Pre(expression = "x > 10 && y > 10 ")
 	@Post("ret < 120 && ret > 5")
 	int doSomeOperation(int x, int y) throws Exception;
 

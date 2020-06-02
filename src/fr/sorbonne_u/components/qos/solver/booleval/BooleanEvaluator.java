@@ -13,7 +13,6 @@ import java.util.*;
  */
 public class BooleanEvaluator {
 
-
 	public static void main(String[] args) throws InterruptedException {
 		Scanner sc = new Scanner((System.in));
 		String expression = "";
@@ -28,48 +27,21 @@ public class BooleanEvaluator {
 		RecursiveDescentParser parser = new RecursiveDescentParser(lexer);
 	    BooleanExpression ast = parser.build();
 		System.out.println(String.format("AST: %s", ast));
-		System.out.println(String.format("RES: %s", ast.interpret()));
-		System.out.println(makeConstraint(ast));
+
 	}
 
+	/**
+	 * Construct the Ast
+	 * @param expression the exrp
+	 * @return ast
+	 */
 	public static BooleanExpression makeExprFromString(String expression){
 		Lexer lexer = new Lexer(new ByteArrayInputStream(expression.getBytes()));
 		RecursiveDescentParser parser = new RecursiveDescentParser(lexer);
 		return parser.build();
 	}
 
-	public static String makeConstraint (BooleanExpression ast){
-		if(ast instanceof Terminal){
-			return ast.toString();
-		}
-		if(ast instanceof And){
-			return "and("+makeConstraint(((And) ast).getLeft())+","+makeConstraint(((And) ast).getRight())+")";
-		}
-		if(ast instanceof Or){
-			return "or("+makeConstraint(((Or) ast).getLeft())+","+makeConstraint(((Or) ast).getRight())+")";
-		}
-		if(ast instanceof Not){
-			return "!("+makeConstraint(((Not) ast).getLeft())+")";
-		}
-		return "error";
 
-	};
-	public static String makeConstraintN (BooleanExpression ast){
-		if(ast instanceof Terminal){
-			return ast.toString();
-		}
-		if(ast instanceof And){
-			return "or("+makeConstraintN(((And) ast).getLeft())+","+makeConstraintN(((And) ast).getRight())+")";
-		}
-		if(ast instanceof Or){
-			return "and("+makeConstraintN(((Or) ast).getLeft())+","+makeConstraintN(((Or) ast).getRight())+")";
-		}
-		if(ast instanceof Not){
-			return "!("+makeConstraintN(((Not) ast).getLeft())+")";
-		}
-		return "error";
-
-	};
 
 
 }

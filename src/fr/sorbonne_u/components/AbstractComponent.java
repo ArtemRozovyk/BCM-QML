@@ -1,25 +1,25 @@
 package fr.sorbonne_u.components;
 
 // Copyright Jacques Malenfant, Sorbonne Universite.
-// 
+//
 // Jacques.Malenfant@lip6.fr
-// 
+//
 // This software is a computer program whose purpose is to provide a
 // basic component programming model to program with components
 // distributed applications in the Java programming language.
-// 
+//
 // This software is governed by the CeCILL-C license under French law and
 // abiding by the rules of distribution of free software.  You can use,
 // modify and/ or redistribute the software under the terms of the
 // CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
 // URL "http://www.cecill.info".
-// 
+//
 // As a counterpart to the access to the source code and  rights to copy,
 // modify and redistribute granted by the license, users are provided only
 // with a limited warranty  and the software's author,  the holder of the
 // economic rights,  and the successive licensors  have only  limited
-// liability. 
-// 
+// liability.
+//
 // In this respect, the user's attention is drawn to the risks associated
 // with loading,  using,  modifying and/or developing or reproducing the
 // software by the user in light of its specific status of free software,
@@ -27,15 +27,20 @@ package fr.sorbonne_u.components;
 // therefore means  that it is reserved for developers  and  experienced
 // professionals having in-depth computer knowledge. Users are therefore
 // encouraged to load and test the software's suitability as regards their
-// requirements in conditions enabling the security of their systems and/or 
-// data to be ensured and,  more generally, to use and operate it in the 
-// same conditions as regards security. 
-// 
+// requirements in conditions enabling the security of their systems and/or
+// data to be ensured and,  more generally, to use and operate it in the
+// same conditions as regards security.
+//
 // The fact that you are presently reading this means that you have had
 // knowledge of the CeCILL-C license and that you accept its terms.
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -66,7 +71,8 @@ import fr.sorbonne_u.components.ports.InboundPortI;
 import fr.sorbonne_u.components.ports.OutboundPortI;
 import fr.sorbonne_u.components.ports.PortI;
 import fr.sorbonne_u.components.qos.*;
-import fr.sorbonne_u.components.qos.interfaces.*;
+
+import fr.sorbonne_u.components.qos.qml.interfaces.*;
 import fr.sorbonne_u.components.reflection.interfaces.ReflectionI;
 import fr.sorbonne_u.components.reflection.utils.ConstructorSignature;
 import fr.sorbonne_u.components.reflection.utils.ServiceSignature;
@@ -89,7 +95,7 @@ import java.lang.reflect.Modifier;
  * virtual machine with operations dealing with individual components.
  *
  * <p><strong>Description</strong></p>
- * 
+ *
  * <p>
  * In BCM, a component is an instance of class that extends
  * <code>AbstractComponent</code> and which implements component services
@@ -106,7 +112,7 @@ import java.lang.reflect.Modifier;
  * </p>
  * <p>
  * Components can be passive or active. Passive components do not have their
- * own thread, so any call they serve will use the thread of the caller. 
+ * own thread, so any call they serve will use the thread of the caller.
  * <code>handleRequest</code> simply calls the component service in the
  * thread of the caller component. Active components use their own threads
  * to perform the tasks.which are managed through the Java Executor framework
@@ -171,9 +177,9 @@ import java.lang.reflect.Modifier;
  *       and in particular the shutting down of components and the interaction
  *       with reflective features.
  * </pre>
- * 
+ *
  * <p><i>Usage</i></p>
- * 
+ *
  * <p>
  * This class is meant to be extended by any class implementing a kind of
  * components in the application.  Constructors and methods should be used only
@@ -192,9 +198,9 @@ import java.lang.reflect.Modifier;
  * defined as services in user components that must be called through the
  * Executor framework.
  * </p>
- * 
+ *
  * <p><i>Executor services management</i></p>
- * 
+ *
  * <p>
  * Components can have their own threads, which are managed through Java
  * executor services. By default, <code>AbstractComponent</code> can
@@ -230,9 +236,9 @@ import java.lang.reflect.Modifier;
  * impose a finer concurrency control mechanism or different
  * priorities for clients, for example.
  * </p>
- * 
+ *
  * <p><i>Plug-in facility</i></p>
- * 
+ *
  * <p>
  * To ease the reuse of component behaviours, BCM implements a plug-in
  * facility for components. A plug-in is an object which class inherit from
@@ -250,9 +256,9 @@ import java.lang.reflect.Modifier;
  * plug-in to abstract the retrieving of the plug-in object away from the user
  * code.
  * </p>
- * 
+ *
  * <p><i>Logging and tracing facility</i></p>
- * 
+ *
  * <p>
  * Debugging threaded Java code is notoriously difficult as debuggers rarely
  * handle thread interruptions correctly. It is even more difficult for
@@ -277,9 +283,9 @@ import java.lang.reflect.Modifier;
  * first column put the messages in their order of execution (modulo the clock
  * drifts for distributed programs).
  * </p>
- * 
+ *
  * <p><i>BCM internal traces</i></p>
- * 
+ *
  * <p>
  * The component virtual machine defined by <code>AbstractCVM</code> uses the
  * logging and tracing facility and complete it with a way to activate,
@@ -289,22 +295,22 @@ import java.lang.reflect.Modifier;
  * <code>AbstractCVM</code>, <code>CVMDebugModesI</code> and
  * <code>CVMDebugModes</code> for more information.
  * </p>
- * 
+ *
  * <p><strong>Invariant</strong></p>
- * 
+ *
  * <pre>
  * invariant	requiredInterfaces != null
  * invariant	offeredInterfaces != null
  * invariant	interfaces2ports != null
  * invariant	forall(Class inter : interfaces2ports.keys()) { requiredInterfaces.contains(inter) || offeredInterfaces.contains(inter) }
  * </pre>
- * 
+ *
  * <p>Created on : 2012-11-06</p>
- * 
+ *
  * @author	<a href="mailto:Jacques.Malenfant@lip6.fr">Jacques Malenfant</a>
  */
 public abstract class	AbstractComponent
-implements	ComponentI
+		implements	ComponentI
 {
 	// ------------------------------------------------------------------------
 	// Internal information about inner components and component lifecycle
@@ -316,9 +322,17 @@ implements	ComponentI
 
 
 	/** QoS type of contracts in order to manipulate dimensions **/
-	Map<String, List<ContractI>> contractTypeMap;
+	protected Map<Method, List<ContractI>> contractTypeMap;
 
-
+	public Map<Method, List<ContractI>> getContractTypeMap() {
+		if(contractTypeMap == null){
+			contractTypeMap = new HashMap<Method, List<ContractI>>();
+			return contractTypeMap;
+		}
+		else {
+			return contractTypeMap;
+		}
+	}
 
 	// ------------------------------------------------------------------------
 	// Inner components management
@@ -335,9 +349,9 @@ implements	ComponentI
 	 * this component ; the composite component must have this component as
 	 * subcomponent for this method to succeed otherwise an assertion exception
 	 * is raised.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	composite != null
 	 * post	true			// no postcondition.
@@ -346,8 +360,8 @@ implements	ComponentI
 	 * @param composite		the reference to the composite component containing immediately this component.
 	 */
 	private void		setCompositeComponentReference(
-		AbstractComponent composite
-		)
+			AbstractComponent composite
+	)
 	{
 		//this.getClass().getMethods()[1].
 		assert	this.composite == null ;
@@ -357,9 +371,9 @@ implements	ComponentI
 
 
 
-	public ContractTypeI getContractType(String name) throws NoSuchContractTypeException {
-		if(contractTypeMap.containsKey(name)){
-			return contractTypeMap.get(name);
+	public List<ContractI> getContract(Method method) throws NoSuchContractTypeException {
+		if(contractTypeMap.containsKey(method)){
+			return contractTypeMap.get(method);
 		}else{
 			throw new NoSuchContractTypeException();
 		}
@@ -369,9 +383,9 @@ implements	ComponentI
 
 	/**
 	 * return true if this component is a subcomponent of a composite.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	true			// no precondition.
 	 * post	true			// no postcondition.
@@ -387,9 +401,9 @@ implements	ComponentI
 	/**
 	 * get the reference to the immediate composite component containing
 	 * this component.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isSubcomponent()
 	 * post	true			// no postcondition.
@@ -407,9 +421,9 @@ implements	ComponentI
 	/**
 	 * find the inbound port with the given URI of a subcomponent that has
 	 * the given reflection inbound port URI.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	true			// no precondition.
 	 * post	true			// no postcondition.
@@ -420,16 +434,16 @@ implements	ComponentI
 	 * @return					the reference on the inbound port of the subcomponent.
 	 */
 	protected InboundPortI	findSubcomponentInboundPortFromURI(
-		String subcomponentURI,
-		String portURI
-		)
+			String subcomponentURI,
+			String portURI
+	)
 	{
 		ComponentI subcomponent = null ;
 		synchronized (this.innerComponents) {
 			for (ComponentI c : this.innerComponents) {
 				try {
 					if (c.findPortURIsFromInterface(ReflectionI.class)[0].
-													equals(subcomponentURI)) {
+							equals(subcomponentURI)) {
 						subcomponent = c ;
 						break ;
 					}
@@ -440,15 +454,15 @@ implements	ComponentI
 		}
 
 		return ((AbstractComponent)subcomponent).
-										findInboundPortFromURI(this, portURI) ;
+				findInboundPortFromURI(this, portURI) ;
 	}
 
 	/**
 	 * finds an inbound port of this component from its URI if it is a
 	 * subcomponent of the given composite.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	composite != null
 	 * pre	portURI != null
@@ -460,19 +474,19 @@ implements	ComponentI
 	 * @return			the port with the given URI or null if not found.
 	 */
 	private InboundPortI	findInboundPortFromURI(
-		ComponentI composite,
-		String portURI
-		)
+			ComponentI composite,
+			String portURI
+	)
 	{
 		assert	composite != null :
-					new PreconditionException("composite must not be null!") ;
+				new PreconditionException("composite must not be null!") ;
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	portURI != null :
-					new PreconditionException("Port URI is null!") ;
+				new PreconditionException("Port URI is null!") ;
 
 		InboundPortI p = null ;
 		if (this.composite == composite) {
@@ -494,21 +508,21 @@ implements	ComponentI
 	 * executor services of the component.
 	 *
 	 * <p><strong>Description</strong></p>
-	 * 
+	 *
 	 * <p>
 	 * This interface is useful when programmers need to extend standard Java
 	 * thread pools to provide additional services, like gathering execution
 	 * statistics.
 	 * </p>
-	 * 
+	 *
 	 * <p><strong>Invariant</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * invariant		true
 	 * </pre>
-	 * 
+	 *
 	 * <p>Created on : 2020-03-18</p>
-	 * 
+	 *
 	 * @author	<a href="mailto:Jacques.Malenfant@lip6.fr">Jacques Malenfant</a>
 	 */
 	public static interface		ExecutorServiceFactory
@@ -516,9 +530,9 @@ implements	ComponentI
 		/**
 		 * create a new executor service (thread pool) with the given number of
 		 * threads.
-		 * 
+		 *
 		 * <p><strong>Contract</strong></p>
-		 * 
+		 *
 		 * <pre>
 		 * pre	{@code nbThreads > 0}
 		 * post	ret != null
@@ -535,19 +549,19 @@ implements	ComponentI
 	 * executor service factory creating standard Java thread pools.
 	 *
 	 * <p><strong>Description</strong></p>
-	 * 
+	 *
 	 * <p><strong>Invariant</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * invariant		true
 	 * </pre>
-	 * 
+	 *
 	 * <p>Created on : 2020-03-18</p>
-	 * 
+	 *
 	 * @author	<a href="mailto:Jacques.Malenfant@lip6.fr">Jacques Malenfant</a>
 	 */
 	protected static class		StandardExecutorServiceFactory
-	implements	ExecutorServiceFactory
+			implements	ExecutorServiceFactory
 	{
 		/**
 		 * @see fr.sorbonne_u.components.AbstractComponent.ExecutorServiceFactory#createExecutorService(int)
@@ -569,19 +583,19 @@ implements	ComponentI
 	 * pools.
 	 *
 	 * <p><strong>Description</strong></p>
-	 * 
+	 *
 	 * <p><strong>Invariant</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * invariant		true
 	 * </pre>
-	 * 
+	 *
 	 * <p>Created on : 2020-03-18</p>
-	 * 
+	 *
 	 * @author	<a href="mailto:Jacques.Malenfant@lip6.fr">Jacques Malenfant</a>
 	 */
 	protected static class		StandardSheduledExecutorServiceFactory
-	implements	ExecutorServiceFactory
+			implements	ExecutorServiceFactory
 	{
 		/**
 		 * @see fr.sorbonne_u.components.AbstractComponent.ExecutorServiceFactory#createExecutorService(int)
@@ -616,12 +630,12 @@ implements	ComponentI
 	protected Map<String,Integer>		executorServicesIndexes ;
 	/** URI of the standard request handler pool of threads.				*/
 	public static final String			STANDARD_REQUEST_HANDLER_URI =
-											"STANDARD_REQUEST_H_URI" ;
+			"STANDARD_REQUEST_H_URI" ;
 	/** index of the standard request handler pool of threads.			*/
 	protected final int					standardRequestHandlerIndex ;
 	/** URI of the standard schedulable tasks handler pool of threads.	*/
 	public static final String			STANDARD_SCHEDULABLE_HANDLER_URI =
-											"STANDARD_SCHEDULABLE_H_URI" ;
+			"STANDARD_SCHEDULABLE_H_URI" ;
 	/** index of the standard schedulable tasks handler pool of threads.	*/
 	protected final int					standardSchedulableHandlerIndex ;
 	/** vector of executor service managers.							 	*/
@@ -630,9 +644,9 @@ implements	ComponentI
 	/**
 	 * create a new user-defined executor service under the given URI and
 	 * with the given number of threads.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	uri != null
 	 * pre	!this.validExecutorServiceURI(uri)
@@ -646,24 +660,24 @@ implements	ComponentI
 	 * @return				the index associated with the new executor service.
 	 */
 	protected int			createNewExecutorService(
-		String uri,
-		int nbThreads,
-		boolean schedulable
-		)
+			String uri,
+			int nbThreads,
+			boolean schedulable
+	)
 	{
 		return this.createNewExecutorService(
-							uri, nbThreads, schedulable,
-							schedulable ?
-								new StandardSheduledExecutorServiceFactory()
-							:	new StandardExecutorServiceFactory()) ;
+				uri, nbThreads, schedulable,
+				schedulable ?
+						new StandardSheduledExecutorServiceFactory()
+						:	new StandardExecutorServiceFactory()) ;
 	}
 
 	/**
 	 * create a new user-defined executor service under the given URI and
 	 * with the given number of threads.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	uri != null
 	 * pre	!this.validExecutorServiceURI(uri)
@@ -684,16 +698,16 @@ implements	ComponentI
 	 * @return				the index associated with the new executor service.
 	 */
 	protected int			createNewExecutorService(
-		String uri,
-		int nbThreads,
-		boolean schedulable,
-		ExecutorServiceFactory factory
-		)
+			String uri,
+			int nbThreads,
+			boolean schedulable,
+			ExecutorServiceFactory factory
+	)
 	{
 		assert	uri != null : new PreconditionException("uri != null") ;
 		assert	!this.validExecutorServiceURI(uri) :
-					new PreconditionException(
-								"!this.validExecutorServiceURI(uri)") ;
+				new PreconditionException(
+						"!this.validExecutorServiceURI(uri)") ;
 		assert	nbThreads > 0 : new PreconditionException("nbThreads > 0") ;
 		assert	factory != null : new PreconditionException("factory != null") ;
 		int size_pre = this.executorServices.size() ;
@@ -706,14 +720,14 @@ implements	ComponentI
 		ExecutorService es = factory.createExecutorService(nbThreads) ;
 
 		assert	schedulable ?
-					es instanceof ScheduledExecutorService
+				es instanceof ScheduledExecutorService
 				:	es instanceof ExecutorService ;
 
 		if (!schedulable) {
 			cesm = new ComponentExecutorServiceManager(uri, nbThreads, es) ;
 		} else {
 			cesm = new ComponentSchedulableExecutorServiceManager(
-													   uri, nbThreads, es) ;
+					uri, nbThreads, es) ;
 		}
 		this.executorServices.add(cesm) ;
 		this.isConcurrent = true ;
@@ -725,8 +739,8 @@ implements	ComponentI
 		assert	this.executorServices.size() == size_pre + 1 ;
 
 		assert	this.validExecutorServiceURI(uri) :
-					new PostconditionException(
-								"this.validExecutorServiceURI(uri)") ;
+				new PostconditionException(
+						"this.validExecutorServiceURI(uri)") ;
 
 		return index ;
 	}
@@ -756,8 +770,8 @@ implements	ComponentI
 	public boolean		isSchedulable(String uri)
 	{
 		assert	this.validExecutorServiceURI(uri) :
-					new PreconditionException(
-							"this.validExecutorServiceURI(uri) " + uri) ;
+				new PreconditionException(
+						"this.validExecutorServiceURI(uri) " + uri) ;
 
 		return this.executorServices.
 				get(this.executorServicesIndexes.get(uri)).isSchedulable() ;
@@ -770,8 +784,8 @@ implements	ComponentI
 	public boolean		isSchedulable(int index)
 	{
 		assert	this.validExecutorServiceIndex(index) :
-					new PreconditionException(
-							"this.validExecutorServiceIndex(index) " + index) ;
+				new PreconditionException(
+						"this.validExecutorServiceIndex(index) " + index) ;
 
 		return this.executorServices.get(index).isSchedulable() ;
 	}
@@ -783,23 +797,23 @@ implements	ComponentI
 	public int			getExecutorServiceIndex(String uri)
 	{
 		assert	this.validExecutorServiceURI(uri) :
-					new PreconditionException(
-							"this.validExecutorServiceURI(uri) " + uri) ;
+				new PreconditionException(
+						"this.validExecutorServiceURI(uri) " + uri) ;
 
 		int ret = this.executorServicesIndexes.get(uri) ;
 
 		assert	this.validExecutorServiceIndex(ret) :
-					new PostconditionException(
-							"this.validExecutorServiceIndex(return) " + ret) ;
+				new PostconditionException(
+						"this.validExecutorServiceIndex(return) " + ret) ;
 
 		return ret ;
 	}
 
 	/**
 	 * get the executor service at the given index.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.validExecutorServiceIndex(index)
 	 * post	true			// no postcondition.
@@ -811,17 +825,17 @@ implements	ComponentI
 	protected ExecutorService	getExecutorService(int index)
 	{
 		assert	this.validExecutorServiceIndex(index) :
-					new PreconditionException(
-							"this.validExecutorServiceIndex(index) " + index) ;
+				new PreconditionException(
+						"this.validExecutorServiceIndex(index) " + index) ;
 
 		return this.executorServices.get(index).getExecutorService() ;
 	}
 
 	/**
 	 * get the executor service at the given URI.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.validExecutorServiceURI(uri)
 	 * post	true			// no postcondition.
@@ -833,18 +847,18 @@ implements	ComponentI
 	protected ExecutorService	getExecutorService(String uri)
 	{
 		assert	this.validExecutorServiceURI(uri) :
-					new PreconditionException(
-							"this.validExecutorServiceURI(uri) " + uri) ;
+				new PreconditionException(
+						"this.validExecutorServiceURI(uri) " + uri) ;
 
 		return this.executorServices.get(this.getExecutorServiceIndex(uri)).
-													getExecutorService() ;
+				getExecutorService() ;
 	}
 
 	/**
 	 * get the executor service at the given index.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.validExecutorServiceIndex(index)
 	 * pre	this.isSchedulable(index)
@@ -855,26 +869,26 @@ implements	ComponentI
 	 * @return		the executor service at the given index.
 	 */
 	protected ScheduledExecutorService	getSchedulableExecutorService(
-		int index
-		)
+			int index
+	)
 	{
 		assert	this.validExecutorServiceIndex(index) :
-					new PreconditionException(
-							"this.validExecutorServiceIndex(index) " + index) ;
+				new PreconditionException(
+						"this.validExecutorServiceIndex(index) " + index) ;
 		assert	this.isSchedulable(index) :
-					new PreconditionException(
-							"this.isSchedulable(index) " + index) ;
+				new PreconditionException(
+						"this.isSchedulable(index) " + index) ;
 
-		return ((ComponentSchedulableExecutorServiceManager) 
-									this.executorServices.get(index)).
-											getScheduledExecutorService() ;
+		return ((ComponentSchedulableExecutorServiceManager)
+				this.executorServices.get(index)).
+				getScheduledExecutorService() ;
 	}
 
 	/**
 	 * get the executor service at the given URI.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.validExecutorServiceURI(uri)
 	 * pre	this.isSchedulable(uri)
@@ -885,21 +899,21 @@ implements	ComponentI
 	 * @return		the executor service at the given URI.
 	 */
 	protected ScheduledExecutorService	getSchedulableExecutorService(
-		String uri
-		)
+			String uri
+	)
 	{
 		assert	this.validExecutorServiceURI(uri) :
-					new PreconditionException(
-								"this.validExecutorServiceURI(uri) " + uri) ;
+				new PreconditionException(
+						"this.validExecutorServiceURI(uri) " + uri) ;
 
 		ComponentExecutorServiceManager csem =
 				this.executorServices.get(this.getExecutorServiceIndex(uri)) ;
 
 		assert	csem.isSchedulable() :
-					new PreconditionException("csem.isSchedulable() " + csem) ;
+				new PreconditionException("csem.isSchedulable() " + csem) ;
 
 		return ((ComponentSchedulableExecutorServiceManager) csem).
-											getScheduledExecutorService() ;
+				getScheduledExecutorService() ;
 	}
 
 	/**
@@ -925,9 +939,9 @@ implements	ComponentI
 	/**
 	 * configure the plug-in facilities for this component, adding the offered
 	 * interface, the inbound port and publish it.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	!this.isPluginFacilitiesConfigured()
 	 * post	this.isPluginFacilitiesConfigured()
@@ -938,21 +952,21 @@ implements	ComponentI
 	protected void		configurePluginFacilities() throws Exception
 	{
 		assert	!this.isPluginFacilitiesConfigured() :
-					new RuntimeException("Can't configure plug-in "
-										+ "facilities, already done!") ;
+				new RuntimeException("Can't configure plug-in "
+						+ "facilities, already done!") ;
 
 		this.installedPlugins = new HashMap<String,PluginI>() ;
 
 		assert	this.isPluginFacilitiesConfigured() :
-					new RuntimeException("Plug-in facilities "
-							+ "configuration not achieved correctly!") ;
+				new RuntimeException("Plug-in facilities "
+						+ "configuration not achieved correctly!") ;
 	}
 
 	/**
 	 * return true if the plug-in facilities have been configured.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	true			// no precondition.
 	 * post	true			// no postcondition.
@@ -968,9 +982,9 @@ implements	ComponentI
 	/**
 	 * unconfigure the plug-in facilities for this component, removing the
 	 * offered interface, the inbound port and unpublish it.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isPluginFacilitiesConfigured()
 	 * post	!this.isPluginFacilitiesConfigured()
@@ -981,8 +995,8 @@ implements	ComponentI
 	protected void		unConfigurePluginFacilitites() throws Exception
 	{
 		assert	this.isPluginFacilitiesConfigured() :
-					new RuntimeException("Can't unconfigure plug-in "
-								+ "facilities, they are not configured!") ;
+				new RuntimeException("Can't unconfigure plug-in "
+						+ "facilities, they are not configured!") ;
 
 		for (Entry<String,PluginI> e : this.installedPlugins.entrySet()) {
 			((PluginI)e.getValue()).uninstall() ;
@@ -990,15 +1004,15 @@ implements	ComponentI
 		this.installedPlugins = null ;
 
 		assert	!this.isPluginFacilitiesConfigured() :
-					new RuntimeException("Plug-in facilities "
-							+ "unconfiguration not achieved correctly!") ;
+				new RuntimeException("Plug-in facilities "
+						+ "unconfiguration not achieved correctly!") ;
 	}
 
 	/**
 	 * install a plug-in into this component.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	!this.isInstalled(plugin.getPluginURI())
 	 * post	this.isIntalled(plugin.getPluginURI())
@@ -1008,20 +1022,20 @@ implements	ComponentI
 	 * @throws Exception	<i>todo.</i>
 	 */
 	protected void			installPlugin(
-		PluginI plugin
-		) throws Exception
+			PluginI plugin
+	) throws Exception
 	{
 		assert	this.isPluginFacilitiesConfigured() :
-					new RuntimeException("Can't install plug-in, "
-							+ "plug-in facilities are not configured!") ;
+				new RuntimeException("Can't install plug-in, "
+						+ "plug-in facilities are not configured!") ;
 		assert	!this.isInstalled(plugin.getPluginURI()) :
-					new PreconditionException("Can't install plug-in, "
+				new PreconditionException("Can't install plug-in, "
 						+ plugin.getPluginURI() + " already installed!") ;
 
 		if (AbstractCVM.DEBUG_MODE.contains(CVMDebugModes.PLUGIN)) {
 			AbstractCVM.getCVM().logDebug(
-						CVMDebugModes.PLUGIN,
-						"Installing plug-in " + plugin.getPluginURI()) ;
+					CVMDebugModes.PLUGIN,
+					"Installing plug-in " + plugin.getPluginURI()) ;
 		}
 
 		((AbstractPlugin)plugin).installOn(this) ;
@@ -1029,7 +1043,7 @@ implements	ComponentI
 		((AbstractPlugin)plugin).initialise() ;
 
 		assert	this.isInstalled(plugin.getPluginURI()) :
-					new PostconditionException("Plug-in "
+				new PostconditionException("Plug-in "
 						+ plugin.getPluginURI() + " not installed correctly!") ;
 	}
 
@@ -1040,18 +1054,18 @@ implements	ComponentI
 	public boolean		hasInstalledPlugins()
 	{
 		assert	this.isPluginFacilitiesConfigured() :
-					new RuntimeException("Can't test, "
+				new RuntimeException("Can't test, "
 						+ "plug-in facilities are not configured!") ;
 
 		return this.isPluginFacilitiesConfigured() &&
-											!this.installedPlugins.isEmpty() ;
+				!this.installedPlugins.isEmpty() ;
 	}
 
 	/**
 	 * finalise the plug-in, at least when finalising the owner component.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	pluginURI != null and this.isIntalled(pluginURI)
 	 * post	true			// no postcondition.
@@ -1063,18 +1077,18 @@ implements	ComponentI
 	protected void		finalisePlugin(String pluginURI) throws Exception
 	{
 		assert	this.isPluginFacilitiesConfigured()  :
-					new RuntimeException("Can't uninstall plug-in, "
-							+ "plug-in facilities are not configured!") ;
+				new RuntimeException("Can't uninstall plug-in, "
+						+ "plug-in facilities are not configured!") ;
 		assert	pluginURI != null :
-					new PreconditionException("Plug-in URI is null!") ;
+				new PreconditionException("Plug-in URI is null!") ;
 		assert	this.isInstalled(pluginURI) :
-					new PreconditionException("Can't uninstall plug-in, "
-							+ pluginURI + " not installed!") ;
+				new PreconditionException("Can't uninstall plug-in, "
+						+ pluginURI + " not installed!") ;
 
 		if (AbstractCVM.DEBUG_MODE.contains(CVMDebugModes.PLUGIN)) {
 			AbstractCVM.getCVM().logDebug(
-									CVMDebugModes.PLUGIN,
-									"Finalising plug-in " + pluginURI) ;
+					CVMDebugModes.PLUGIN,
+					"Finalising plug-in " + pluginURI) ;
 		}
 
 		PluginI temp = this.installedPlugins.get(pluginURI) ;
@@ -1083,9 +1097,9 @@ implements	ComponentI
 
 	/**
 	 * uninstall a plug-in from this component.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	pluginURI != null and this.isIntalled(pluginURI)
 	 * post	!this.isIntalled(pluginURI)
@@ -1097,18 +1111,18 @@ implements	ComponentI
 	protected void		uninstallPlugin(String pluginURI) throws Exception
 	{
 		assert	this.isPluginFacilitiesConfigured()  :
-					new RuntimeException("Can't uninstall plug-in, "
-								+ "plug-in facilities are not configured!") ;
+				new RuntimeException("Can't uninstall plug-in, "
+						+ "plug-in facilities are not configured!") ;
 		assert	pluginURI != null :
-					new PreconditionException("Plug-in URI is null!") ;
+				new PreconditionException("Plug-in URI is null!") ;
 		assert	this.isInstalled(pluginURI) :
-					new PreconditionException("Can't uninstall plug-in, "
-								+ pluginURI + " not installed!") ;
+				new PreconditionException("Can't uninstall plug-in, "
+						+ pluginURI + " not installed!") ;
 
 		if (AbstractCVM.DEBUG_MODE.contains(CVMDebugModes.PLUGIN)) {
 			AbstractCVM.getCVM().logDebug(
-									CVMDebugModes.PLUGIN,
-									"Uninstalling plug-in " + pluginURI) ;
+					CVMDebugModes.PLUGIN,
+					"Uninstalling plug-in " + pluginURI) ;
 		}
 
 		this.finalisePlugin(pluginURI) ;
@@ -1117,7 +1131,7 @@ implements	ComponentI
 		this.installedPlugins.remove(pluginURI) ;
 
 		assert	!this.isInstalled(pluginURI) :
-					new PostconditionException("Plug-in " + pluginURI
+				new PostconditionException("Plug-in " + pluginURI
 						+ " still installed after uninstalling!") ;
 	}
 
@@ -1128,23 +1142,23 @@ implements	ComponentI
 	public boolean		isInstalled(String pluginURI)
 	{
 		assert	this.isPluginFacilitiesConfigured() :
-					new RuntimeException("Can't test, "
+				new RuntimeException("Can't test, "
 						+ "plug-in facilities are not configured!") ;
 		assert	pluginURI != null :
-					new PreconditionException("Plug-in URI is null!") ;
+				new PreconditionException("Plug-in URI is null!") ;
 
 		return this.installedPlugins != null &&
-								this.installedPlugins.containsKey(pluginURI) ;
+				this.installedPlugins.containsKey(pluginURI) ;
 	}
 
 	/**
 	 * access a named plug-in into this component.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	pluginURI != null
-	 * pre	
+	 * pre
 	 * post	true			// no postcondition.
 	 * </pre>
 	 *
@@ -1154,10 +1168,10 @@ implements	ComponentI
 	protected PluginI	getPlugin(String pluginURI)
 	{
 		assert	this.isPluginFacilitiesConfigured() :
-					new RuntimeException("Can't access plug-in, "
-							+ "plug-in facilities are not configured!") ;
+				new RuntimeException("Can't access plug-in, "
+						+ "plug-in facilities are not configured!") ;
 		assert	pluginURI != null :
-					new PreconditionException("Plug-in URI is null!") ;
+				new PreconditionException("Plug-in URI is null!") ;
 
 		return this.installedPlugins.get(pluginURI) ;
 	}
@@ -1165,9 +1179,9 @@ implements	ComponentI
 	/**
 	 * initialise the identified plug-in by adding to the owner component every
 	 * specific information, ports, etc. required to run the plug-in.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	pluginURI != null and !this.isInitialised(pluginURI)
 	 * post	this.isInitialised(pluginURI)
@@ -1177,22 +1191,22 @@ implements	ComponentI
 	 * @throws Exception	<i>todo.</i>
 	 */
 	protected void		initialisePlugin(String pluginURI)
-	throws Exception
+			throws Exception
 	{
 		assert	this.isPluginFacilitiesConfigured() :
-					new RuntimeException("Can't access plug-in, "
-							+ "plug-in facilities are not configured!") ;
+				new RuntimeException("Can't access plug-in, "
+						+ "plug-in facilities are not configured!") ;
 		assert	pluginURI != null :
-					new PreconditionException("Plug-in URI is null!") ;
+				new PreconditionException("Plug-in URI is null!") ;
 		assert	!this.isInitialised(pluginURI) :
-					new PreconditionException("Can't initialise plug-in "
+				new PreconditionException("Can't initialise plug-in "
 						+ pluginURI + ", already initialised!")  ;
 
 		this.installedPlugins.get(pluginURI).initialise() ;
 
 		assert	this.isInitialised(pluginURI) :
-					new PostconditionException("Plug-in " + pluginURI +
-													" not initialised!") ;
+				new PostconditionException("Plug-in " + pluginURI +
+						" not initialised!") ;
 	}
 
 	/**
@@ -1200,13 +1214,13 @@ implements	ComponentI
 	 */
 	@Override
 	public boolean		isInitialised(String pluginURI)
-	throws Exception
+			throws Exception
 	{
 		assert	this.isPluginFacilitiesConfigured() :
-					new RuntimeException("Can't test, "
-							+ "plug-in facilities are not configured!") ;
+				new RuntimeException("Can't test, "
+						+ "plug-in facilities are not configured!") ;
 		assert	pluginURI != null :
-					new PreconditionException("Plug-in URI is null!") ;
+				new PreconditionException("Plug-in URI is null!") ;
 
 		return this.installedPlugins.get(pluginURI).isInitialised() ;
 	}
@@ -1240,7 +1254,7 @@ implements	ComponentI
 		}
 		if (this.tracer.isTracing()) {
 			this.tracer.traceMessage(System.currentTimeMillis() + "|" +
-									message + "\n") ;
+					message + "\n") ;
 		}
 	}
 
@@ -1320,7 +1334,7 @@ implements	ComponentI
 	{
 		if (this.tracer != null) {
 			this.tracer.traceMessage(
-							System.currentTimeMillis() + "|" + message) ;
+					System.currentTimeMillis() + "|" + message) ;
 		}
 	}
 
@@ -1357,9 +1371,9 @@ implements	ComponentI
 	/**
 	 * automatically declare the required and offered interface using the
 	 * information given in the corresponding annotations.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	true			// no precondition.
 	 * post	true			// no postcondition.
@@ -1369,10 +1383,10 @@ implements	ComponentI
 	protected void		addInterfacesFromAnnotations()
 	{
 		RequiredInterfaces requiredAnnotation =
-					this.getClass().getAnnotation(RequiredInterfaces.class) ;
+				this.getClass().getAnnotation(RequiredInterfaces.class) ;
 		if (requiredAnnotation != null) {
 			Class<? extends RequiredI>[] required =
-											requiredAnnotation.required() ;
+					requiredAnnotation.required() ;
 			if (required != null) {
 				for (int i = 0 ; i < required.length ; i++) {
 					this.addRequiredInterface(required[i]) ;
@@ -1380,7 +1394,7 @@ implements	ComponentI
 			}
 		}
 		OfferedInterfaces offeredAnnotation =
-					this.getClass().getAnnotation(OfferedInterfaces.class) ;
+				this.getClass().getAnnotation(OfferedInterfaces.class) ;
 		if (offeredAnnotation != null) {
 			Class<? extends OfferedI>[] offered = offeredAnnotation.offered() ;
 			if (offered != null) {
@@ -1394,9 +1408,9 @@ implements	ComponentI
 	/**
 	 * automatically install and initialise plug-ins using the information
 	 * given in the corresponding annotations.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	true			// no precondition.
 	 * post	true			// no postcondition.
@@ -1405,8 +1419,8 @@ implements	ComponentI
 	protected void		addPluginsFromAnnotations()
 	{
 		assert	this.isPluginFacilitiesConfigured() :
-					new RuntimeException("Can't install plug-ins, "
-							+ "plug-in facilities are not configured!") ;
+				new RuntimeException("Can't install plug-ins, "
+						+ "plug-in facilities are not configured!") ;
 
 		try {
 			AddPlugins pluginsAnnotation =
@@ -1426,11 +1440,11 @@ implements	ComponentI
 				}
 			}
 			AddPlugin pluginAnnotation =
-								this.getClass().getAnnotation(AddPlugin.class) ;
+					this.getClass().getAnnotation(AddPlugin.class) ;
 			if (pluginAnnotation != null) {
 				String uri = pluginAnnotation.pluginURI() ;
 				Class<? extends PluginI> pluginClass =
-											pluginAnnotation.pluginClass() ;
+						pluginAnnotation.pluginClass() ;
 				PluginI p = pluginClass.newInstance() ;
 				p.setPluginURI(uri) ;
 				this.installPlugin(p) ;
@@ -1453,9 +1467,9 @@ implements	ComponentI
 	 * <code>nbSchedulableThreads</code> are both zero, and an active one with
 	 * <code>nbThreads</code> non schedulable thread and
 	 * <code>nbSchedulableThreads</code> schedulable threads otherwise.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	nbThreads &gt;= 0 and nbSchedulableThreads &gt;= 0
 	 * post	true			// no postcondition.
@@ -1465,12 +1479,12 @@ implements	ComponentI
 	 * @param nbSchedulableThreads	number of threads to be created in the component schedulable pool.
 	 */
 	protected			AbstractComponent(
-		int nbThreads,
-		int nbSchedulableThreads
-		)
+			int nbThreads,
+			int nbSchedulableThreads
+	)
 	{
 		this(AbstractPort.generatePortURI(ReflectionI.class),
-											nbThreads, nbSchedulableThreads) ;
+				nbThreads, nbSchedulableThreads) ;
 	}
 
 	/**
@@ -1478,9 +1492,9 @@ implements	ComponentI
 	 * <code>nbSchedulableThreads</code> are both zero, and an active one with
 	 * <code>nbThreads</code> non schedulable thread and
 	 * <code>nbSchedulableThreads</code> schedulable threads otherwise.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	reflectionInboundPortURI != null
 	 * pre	nbThreads &gt;= 0
@@ -1493,19 +1507,19 @@ implements	ComponentI
 	 * @param nbSchedulableThreads		number of threads to be created in the component schedulable pool.
 	 */
 	protected			AbstractComponent(
-		String reflectionInboundPortURI,
-		int nbThreads,
-		int nbSchedulableThreads
-		)
+			String reflectionInboundPortURI,
+			int nbThreads,
+			int nbSchedulableThreads
+	)
 	{
 		assert	reflectionInboundPortURI != null :
-					new PreconditionException("Reflection inbound port URI is"
-																+ " null!") ;
+				new PreconditionException("Reflection inbound port URI is"
+						+ " null!") ;
 		assert	nbThreads >= 0 :
-					new PreconditionException("Number of threads is negative!") ;
+				new PreconditionException("Number of threads is negative!") ;
 		assert	nbSchedulableThreads >= 0 :
-					new PreconditionException("Number of schedulable threads"
-														+ " is negative!") ;
+				new PreconditionException("Number of schedulable threads"
+						+ " is negative!") ;
 
 		this.reflectionInboundPortURI = reflectionInboundPortURI ;
 		this.innerComponents = new Vector<ComponentI>() ;
@@ -1534,21 +1548,21 @@ implements	ComponentI
 		this.nbThreads = nbThreads ;
 		if (nbThreads > 0) {
 			this.standardRequestHandlerIndex =
-				this.createNewExecutorService(
-										STANDARD_REQUEST_HANDLER_URI,
-										nbThreads,
-										false) ;
+					this.createNewExecutorService(
+							STANDARD_REQUEST_HANDLER_URI,
+							nbThreads,
+							false) ;
 		} else {
 			this.standardRequestHandlerIndex = -1 ;
 		}
-		
+
 		this.nbSchedulableThreads = nbSchedulableThreads ;
 		if (nbSchedulableThreads > 0) {
 			this.standardSchedulableHandlerIndex =
-				this.createNewExecutorService(
-										STANDARD_SCHEDULABLE_HANDLER_URI,
-										nbSchedulableThreads,
-										true) ;
+					this.createNewExecutorService(
+							STANDARD_SCHEDULABLE_HANDLER_URI,
+							nbSchedulableThreads,
+							true) ;
 		} else {
 			this.standardSchedulableHandlerIndex = -1 ;
 		}
@@ -1571,9 +1585,9 @@ implements	ComponentI
 	 * an extended reflection interface must redefine this method to
 	 * offer the right reflection interface and create the right
 	 * reflection inbound port.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	reflectionInboundPortURI != null
 	 * post	this.isOfferedInterface(ReflectionI.class)
@@ -1581,12 +1595,12 @@ implements	ComponentI
 	 * post	this.findInboundPortURIsFromInterface(ReflectionI.class).length == 1
 	 * post	this.findInboundPortURIsFromInterface(ReflectionI.class)[0].equals(reflectionInboundPortURI)
 	 * </pre>
-	 * 
+	 *
 	 * @param reflectionInboundPortURI	URI of the reflection inbound port to be created.
 	 * @throws Exception				<i>TODO</i>.
 	 */
 	protected void		configureReflection(String reflectionInboundPortURI)
-	throws Exception
+			throws Exception
 	{
 		assert	reflectionInboundPortURI != null ;
 
@@ -1602,14 +1616,14 @@ implements	ComponentI
 		assert	this.isOfferedInterface(ReflectionI.class) ;
 		assert	this.findInboundPortURIsFromInterface(ReflectionI.class) != null ;
 		assert	this.findInboundPortURIsFromInterface(ReflectionI.class).length == 1 ;
-		assert	this.findInboundPortURIsFromInterface(ReflectionI.class)[0].equals(reflectionInboundPortURI) ; 
+		assert	this.findInboundPortURIsFromInterface(ReflectionI.class)[0].equals(reflectionInboundPortURI) ;
 	}
 
 	/**
 	 * check the invariant of component objects.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	ac != null
 	 * post	true			// no postcondition.
@@ -1627,15 +1641,15 @@ implements	ComponentI
 		ret &= ac.innerComponents != null ;
 		ret &= ac.isConcurrent == (ac.executorServices.size() > 0) ;
 		ret &= ac.isConcurrent == (ac.nbThreads > 0 ||
-								   ac.nbSchedulableThreads > 0 ||
-								   ac.executorServices.size() > 0) ;
+				ac.nbSchedulableThreads > 0 ||
+				ac.executorServices.size() > 0) ;
 		ret &= ac.canScheduleTasks == (ac.hasUserDefinedSchedulableThreads()) ;
 		ret &= ac.canScheduleTasks == (ac.nbSchedulableThreads > 0 ||
-									  ac.hasUserDefinedSchedulableThreads()) ;
+				ac.hasUserDefinedSchedulableThreads()) ;
 		ret &= ac.installedPlugins != null ;
 		ret &= ac.executionLog != null || !ac.isLogging() ;
 		ret &= ac.executionLog == null ||
-							(ac.isLogging() == ac.executionLog.isLogging()) ;
+				(ac.isLogging() == ac.executionLog.isLogging()) ;
 		ret &= ac.requiredInterfaces != null ;
 		ret &= ac.offeredInterfaces != null ;
 		ret &= ac.interfaces2ports != null ;
@@ -1651,7 +1665,7 @@ implements	ComponentI
 				try {
 					ret &= ac.isInterface(p.getImplementedInterface()) ;
 					ret &= ac.interfaces2ports.get(
-								p.getImplementedInterface()).contains(p) ;
+							p.getImplementedInterface()).contains(p) ;
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -1664,9 +1678,9 @@ implements	ComponentI
 	/**
 	 * create a component instantiated from the class of the given class name
 	 * and initialised by the constructor which parameters are given.
-	 * 
+	 *
 	 * <p><strong>Description</strong></p>
-	 * 
+	 *
 	 * <p>
 	 * Due to the use of reflection to find the appropriate constructor in the
 	 * component class, BCM does not currently apply the constructor selection
@@ -1685,9 +1699,9 @@ implements	ComponentI
 	 * try to change the types of the formal parameters to simplify the
 	 * constructor selection.
 	 * </p>
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	reflInboundPortURI != null and classname != null
 	 * post	true			// no postcondition.
@@ -1699,9 +1713,9 @@ implements	ComponentI
 	 * @throws Exception		if the creation did not succeed.
 	 */
 	public static String	createComponent(
-		String classname,
-		Object[] constructorParams
-		) throws Exception
+			String classname,
+			Object[] constructorParams
+	) throws Exception
 	{
 		assert	classname != null && constructorParams != null ;
 
@@ -1719,9 +1733,9 @@ implements	ComponentI
 	/**
 	 * instantiate a component instantiated from the class of the given class
 	 * name and initialised by the constructor which parameters are given.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	true			// no precondition.
 	 * post	true			// no postcondition.
@@ -1733,27 +1747,27 @@ implements	ComponentI
 	 * @throws Exception		if the creation did not succeed.
 	 */
 	protected static ComponentI	instantiateComponent(
-		String classname,
-		Object[] constructorParams
-		) throws Exception
+			String classname,
+			Object[] constructorParams
+	) throws Exception
 	{
 		Class<?> cl = Class.forName(classname) ;
 		assert	cl != null && AbstractComponentHelper.isComponentClass(cl) ;
 		Constructor<?> cons =
-			AbstractComponentHelper.getConstructor(cl, constructorParams) ;
+				AbstractComponentHelper.getConstructor(cl, constructorParams) ;
 		assert	cons != null ;
 		cons.setAccessible(true) ;
 		AbstractComponent component =
-			(AbstractComponent)cons.newInstance(constructorParams) ;
+				(AbstractComponent)cons.newInstance(constructorParams) ;
 		return component ;
 	}
 
 	/**
 	 * create a subcomponent instantiated from the class of the given class
 	 * name and initialised by the constructor which parameters are given.
-	 * 
+	 *
 	 * <p><strong>Description</strong></p>
-	 * 
+	 *
 	 * <p>
 	 * Due to the use of reflection to find the appropriate constructor in the
 	 * component class, BCM does not currently apply the constructor selection
@@ -1772,9 +1786,9 @@ implements	ComponentI
 	 * try to change the types of the formal parameters to simplify the
 	 * constructor selection.
 	 * </p>
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	true			// no precondition.
 	 * post	true			// no postcondition.
@@ -1786,9 +1800,9 @@ implements	ComponentI
 	 * @throws Exception		if the creation did not succeed.
 	 */
 	protected String	createSubcomponent(
-		String classname,
-		Object[] constructorParams
-		) throws Exception
+			String classname,
+			Object[] constructorParams
+	) throws Exception
 	{
 		assert	classname != null && constructorParams != null ;
 
@@ -1815,7 +1829,7 @@ implements	ComponentI
 	public boolean		isInStateAmong(ComponentStateI[] states)
 	{
 		assert	states != null :
-					new PreconditionException("State array can't be null!") ;
+				new PreconditionException("State array can't be null!") ;
 
 		boolean ret = false ;
 		for (int i = 0 ; !ret && i < states.length ; i++) {
@@ -1831,7 +1845,7 @@ implements	ComponentI
 	public boolean		notInStateAmong(ComponentStateI[] states)
 	{
 		assert	states != null :
-					new PreconditionException("State array can't be null!") ;
+				new PreconditionException("State array can't be null!") ;
 
 		boolean ret = true ;
 		for (int i = 0 ; ret && i < states.length ; i++) {
@@ -1847,10 +1861,10 @@ implements	ComponentI
 	public boolean		hasItsOwnThreads()
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-										+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 
 		return this.isConcurrent ;
 	}
@@ -1867,7 +1881,7 @@ implements	ComponentI
 					this.executorServices.get(i).getNumberOfThreads() ;
 		}
 		return this.nbThreads + this.nbSchedulableThreads +
-											nbUserDefinedThreads ;
+				nbUserDefinedThreads ;
 	}
 
 	/**
@@ -1877,7 +1891,7 @@ implements	ComponentI
 	public boolean		hasSerialisedExecution()
 	{
 		return this.hasItsOwnThreads() &&
-							this.getTotalNumberOfThreads() == 1 ;
+				this.getTotalNumberOfThreads() == 1 ;
 	}
 
 	/**
@@ -1887,10 +1901,10 @@ implements	ComponentI
 	public boolean		canScheduleTasks()
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-										+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 
 		return this.canScheduleTasks ;
 	}
@@ -1906,10 +1920,10 @@ implements	ComponentI
 	public Class<?>[]	getInterfaces()
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-										+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 
 		ArrayList<Class<?>> temp = new ArrayList<Class<?>>() ;
 		synchronized (this.requiredInterfaces) {
@@ -1928,10 +1942,10 @@ implements	ComponentI
 	public Class<?>		getInterface(Class<?> inter)
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-										+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 
 		Class<?> ret = this.getRequiredInterface(inter) ;
 		if (ret == null) {
@@ -1947,10 +1961,10 @@ implements	ComponentI
 	public Class<?>[]	getRequiredInterfaces()
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-										+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 
 		Class<?>[] ret ;
 		synchronized (this.requiredInterfaces) {
@@ -1966,10 +1980,10 @@ implements	ComponentI
 	public Class<?>		getRequiredInterface(Class<?> inter)
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-										+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 
 		Class<?> ret = null ;
 		boolean found = false ;
@@ -1989,10 +2003,10 @@ implements	ComponentI
 	public Class<?>[]	getOfferedInterfaces()
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-										+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 
 		Class<?>[] ret ;
 		synchronized (this.offeredInterfaces) {
@@ -2008,10 +2022,10 @@ implements	ComponentI
 	public Class<?>		getOfferedInterface(Class<?> inter)
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-										+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 
 		Class<?> ret = null ;
 		boolean found = false ;
@@ -2026,9 +2040,9 @@ implements	ComponentI
 
 	/**
 	 * add a required interface to the required interfaces of this component.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.notInStateAmong(new ComponentStateI[]{ComponentState.TERMINATED})
 	 * pre	RequiredI.class.isAssignableFrom(inter)
@@ -2041,31 +2055,31 @@ implements	ComponentI
 	protected void			addRequiredInterface(Class<?> inter)
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	RequiredI.class.isAssignableFrom(inter) :
-					new PreconditionException(inter +
-								" is not defined as a required interface!") ;
+				new PreconditionException(inter +
+						" is not defined as a required interface!") ;
 		assert	!this.isRequiredInterface(inter) :
-					new PreconditionException(inter + " is already a"
-												+ " required interface!") ;
+				new PreconditionException(inter + " is already a"
+						+ " required interface!") ;
 
 		synchronized (this.requiredInterfaces) {
 			this.requiredInterfaces.add(inter) ;
 		}
 
 		assert	this.isRequiredInterface(inter) :
-					new PostconditionException(inter + " has not been "
-							+ "correctly added as a required interface!") ;
+				new PostconditionException(inter + " has not been "
+						+ "correctly added as a required interface!") ;
 	}
 
 	/**
 	 * remove a required interface from the required interfaces of this component.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.notInStateAmong(new ComponentStateI[]{ComponentState.TERMINATED})
 	 * pre	this.isRequiredInterface(inter)
@@ -2078,31 +2092,31 @@ implements	ComponentI
 	protected void			removeRequiredInterface(Class<?> inter)
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	RequiredI.class.isAssignableFrom(inter) :
-					new PreconditionException(inter +
-								" is not defined as a required interface!") ;
+				new PreconditionException(inter +
+						" is not defined as a required interface!") ;
 		assert	this.isRequiredInterface(inter) :
-					new PreconditionException(inter + " is not a"
-										+ " declared required interface!") ;
+				new PreconditionException(inter + " is not a"
+						+ " declared required interface!") ;
 
 		synchronized (this.requiredInterfaces) {
 			this.requiredInterfaces.remove(inter) ;
 		}
 
 		assert	!this.isRequiredInterface(inter) :
-					new PostconditionException(inter + " has not been "
-							+ "correctly removed as a required interface!") ;
+				new PostconditionException(inter + " has not been "
+						+ "correctly removed as a required interface!") ;
 	}
 
 	/**
 	 * add an offered interface to the offered interfaces of this component.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.notInStateAmong(new ComponentStateI[]{ComponentState.TERMINATED})
 	 * pre	OfferedI.class.isAssignableFrom(inter)
@@ -2115,31 +2129,31 @@ implements	ComponentI
 	protected void		addOfferedInterface(Class<?> inter)
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	OfferedI.class.isAssignableFrom(inter) :
-					new PreconditionException(inter +
-								" is not defined as an offered interface!") ;
+				new PreconditionException(inter +
+						" is not defined as an offered interface!") ;
 		assert	!this.isOfferedInterface(inter) :
-					new PreconditionException(inter + " must not be a"
-										+ " declared offered interface!") ;
+				new PreconditionException(inter + " must not be a"
+						+ " declared offered interface!") ;
 
 		synchronized (this.offeredInterfaces) {
 			this.offeredInterfaces.add(inter) ;
 		}
 
 		assert	this.isOfferedInterface(inter) :
-					new PostconditionException(inter + " has not been "
-								+ "correctly added as an offered interface!") ;
+				new PostconditionException(inter + " has not been "
+						+ "correctly added as an offered interface!") ;
 	}
 
 	/**
 	 * remove an offered interface from the offered interfaces of this component.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.notInStateAmong(new ComponentStateI[]{ComponentState.TERMINATED})
 	 * pre	this.isOfferedInterface(inter)
@@ -2152,24 +2166,24 @@ implements	ComponentI
 	protected void		removeOfferedInterface(Class<?> inter)
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	OfferedI.class.isAssignableFrom(inter) :
-					new PreconditionException(inter +
-								" is not defined as an offered interface!") ;
+				new PreconditionException(inter +
+						" is not defined as an offered interface!") ;
 		assert	this.isOfferedInterface(inter) :
-					new PreconditionException(inter + " is not a"
-										+ " declared offered interface!") ;
+				new PreconditionException(inter + " is not a"
+						+ " declared offered interface!") ;
 
 		synchronized (this.offeredInterfaces) {
 			this.offeredInterfaces.remove(inter) ;
 		}
 
 		assert	!this.isOfferedInterface(inter) :
-					new PostconditionException(inter + " has not been "
-							+ "correctly removed as an offered interface!") ;
+				new PostconditionException(inter + " has not been "
+						+ "correctly removed as an offered interface!") ;
 	}
 
 	/**
@@ -2179,13 +2193,13 @@ implements	ComponentI
 	public boolean		isInterface(Class<?> inter)
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 
 		return this.isRequiredInterface(inter) ||
-											this.isOfferedInterface(inter) ;
+				this.isOfferedInterface(inter) ;
 	}
 
 	/**
@@ -2195,10 +2209,10 @@ implements	ComponentI
 	public boolean		isRequiredInterface(Class<?> inter)
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 
 		synchronized (this.requiredInterfaces) {
 			boolean ret = false ;
@@ -2218,10 +2232,10 @@ implements	ComponentI
 	public boolean		isOfferedInterface(Class<?> inter)
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 
 		synchronized (this.offeredInterfaces) {
 			boolean ret = false ;
@@ -2249,9 +2263,9 @@ implements	ComponentI
 
 	/**
 	 * find the ports of this component that expose the interface inter.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.notInStateAmong(new ComponentStateI[]{ComponentState.TERMINATED})
 	 * pre	inter != null
@@ -2264,12 +2278,12 @@ implements	ComponentI
 	protected PortI[]	findPortsFromInterface(Class<?> inter)
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	inter != null :
-					new PreconditionException("Interface is null!") ;
+				new PreconditionException("Interface is null!") ;
 
 		PortI[] ret = null ;
 		Vector<PortI> temp ;
@@ -2290,17 +2304,17 @@ implements	ComponentI
 	 */
 	@Override
 	public Class<?>		getPortImplementedInterface(String portURI)
-	throws Exception
+			throws Exception
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	portURI != null :
-					new PreconditionException("Port URI is null!") ;
+				new PreconditionException("Port URI is null!") ;
 		assert	this.isPortExisting(portURI) :
-					new PreconditionException(portURI + " is not a port!") ;
+				new PreconditionException(portURI + " is not a port!") ;
 
 		return this.findPortFromURI(portURI).getImplementedInterface() ;
 	}
@@ -2310,15 +2324,15 @@ implements	ComponentI
 	 */
 	@Override
 	public String[]		findPortURIsFromInterface(Class<?> inter)
-	throws Exception
+			throws Exception
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	inter != null :
-					new PreconditionException("Interface is null!") ;
+				new PreconditionException("Interface is null!") ;
 
 		String[] ret = null ;
 		PortI[] ports = this.findPortsFromInterface(inter) ;
@@ -2336,15 +2350,15 @@ implements	ComponentI
 	 */
 	@Override
 	public String[]		findInboundPortURIsFromInterface(Class<?> inter)
-	throws Exception
+			throws Exception
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	inter != null :
-					new PreconditionException("Interface is null!") ;
+				new PreconditionException("Interface is null!") ;
 
 		String[] ret = null ;
 
@@ -2366,15 +2380,15 @@ implements	ComponentI
 	 */
 	@Override
 	public String[]		findOutboundPortURIsFromInterface(Class<?> inter)
-	throws Exception
+			throws Exception
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	inter != null :
-					new PreconditionException("Interface is null!") ;
+				new PreconditionException("Interface is null!") ;
 
 		String[] ret = null ;
 
@@ -2393,9 +2407,9 @@ implements	ComponentI
 
 	/**
 	 * finds a port of this component from its URI.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	portURI != null
 	 * post	return == null || return.getPortURI().equals(portURI)
@@ -2407,12 +2421,12 @@ implements	ComponentI
 	protected PortI		findPortFromURI(String portURI)
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	portURI != null :
-					new PreconditionException("Port URI is null!") ;
+				new PreconditionException("Port URI is null!") ;
 
 		synchronized (this.portURIs2ports) {
 			return this.portURIs2ports.get(portURI) ;
@@ -2421,9 +2435,9 @@ implements	ComponentI
 
 	/**
 	 * add a port to the set of ports of this component.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.notInStateAmong(new ComponentStateI[]{ComponentState.TERMINATED})
 	 * pre	p != null
@@ -2439,20 +2453,20 @@ implements	ComponentI
 	protected void		addPort(PortI p) throws Exception
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	p != null : new PreconditionException("p is null!") ;
 		assert	this.equals(p.getOwner()) :
-					new PreconditionException("This component is not the"
-												+ " owner of this port!") ;
+				new PreconditionException("This component is not the"
+						+ " owner of this port!") ;
 		assert	this.isInterface(p.getImplementedInterface()) :
-					new PreconditionException("The port doesn't implement"
-							+ " an inteface declared by this component!");
+				new PreconditionException("The port doesn't implement"
+						+ " an inteface declared by this component!");
 		assert	this.findPortFromURI(p.getPortURI()) == null :
-					new RuntimeException("A port with the same URI is"
-								+ " already registered in this component!") ;
+				new RuntimeException("A port with the same URI is"
+						+ " already registered in this component!") ;
 
 		Vector<PortI> vps = null ;
 		synchronized (this.interfaces2ports) {
@@ -2472,18 +2486,18 @@ implements	ComponentI
 		}
 
 		assert	this.interfaces2ports.containsKey(p.getImplementedInterface()) :
-					new PostconditionException("Port not correctly registered!") ;
+				new PostconditionException("Port not correctly registered!") ;
 		assert	this.portURIs2ports.containsKey(p.getPortURI()) :
-					new PostconditionException("Port not correctly registered!") ;
+				new PostconditionException("Port not correctly registered!") ;
 		assert	p.equals(this.findPortFromURI(p.getPortURI())) :
-					new PostconditionException("Port not correctly registered!") ;
+				new PostconditionException("Port not correctly registered!") ;
 	}
 
 	/**
 	 * remove a port from the set of ports of this component.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.notInStateAmong(new ComponentStateI[]{ComponentState.TERMINATED})
 	 * pre	p != null
@@ -2498,24 +2512,24 @@ implements	ComponentI
 	protected void		removePort(PortI p) throws Exception
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-											+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	p != null : new PreconditionException("p is null!") ;
 		assert	this.equals(p.getOwner()) :
-					new PreconditionException("This component is not the"
-													+ " owner of this port!") ;
+				new PreconditionException("This component is not the"
+						+ " owner of this port!") ;
 		assert	this.interfaces2ports.containsKey(p.getImplementedInterface()) :
-					new PreconditionException("Port is not registered "
-													+ "in this component!") ;
+				new PreconditionException("Port is not registered "
+						+ "in this component!") ;
 		assert	this.portURIs2ports.containsKey(p.getPortURI()) :
-					new PreconditionException("Port is not registered "
-													+ "in this component!") ;
+				new PreconditionException("Port is not registered "
+						+ "in this component!") ;
 
 		synchronized (this.interfaces2ports) {
 			Vector<PortI> vps =
-				this.interfaces2ports.get(p.getImplementedInterface()) ;
+					this.interfaces2ports.get(p.getImplementedInterface()) ;
 			synchronized (vps) {
 				vps.remove(p) ;
 				if (vps.isEmpty()) {
@@ -2528,8 +2542,8 @@ implements	ComponentI
 		}
 
 		assert	!this.portURIs2ports.containsKey(p.getPortURI()) :
-					new PostconditionException("Port not correctly removed "
-														+ "from component!") ;
+				new PostconditionException("Port not correctly removed "
+						+ "from component!") ;
 	}
 
 	/**
@@ -2539,10 +2553,10 @@ implements	ComponentI
 	public boolean		isPortExisting(String portURI) throws Exception
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	portURI != null : new PreconditionException("p is null!") ;
 
 		PortI p = this.findPortFromURI(portURI) ;
@@ -2556,14 +2570,14 @@ implements	ComponentI
 	public boolean		isPortConnected(String portURI) throws Exception
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	portURI != null :
-					new PreconditionException("Port URI is null!") ;
+				new PreconditionException("Port URI is null!") ;
 		assert	this.isPortExisting(portURI) :
-					new PreconditionException(portURI + " is not a port!") ;
+				new PreconditionException(portURI + " is not a port!") ;
 
 		PortI p = this.findPortFromURI(portURI) ;
 		return p.connected() ;
@@ -2573,27 +2587,27 @@ implements	ComponentI
 	 * @see fr.sorbonne_u.components.ComponentI#doPortConnection(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	public void			doPortConnection(
-		String portURI,
-		String otherPortURI,
-		String ccname
-		) throws Exception 
+			String portURI,
+			String otherPortURI,
+			String ccname
+	) throws Exception
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	portURI != null :
-					new PreconditionException("Port URI is null!") ;
+				new PreconditionException("Port URI is null!") ;
 		assert	otherPortURI != null :
-					new PreconditionException("Other port URI is null!") ;
+				new PreconditionException("Other port URI is null!") ;
 		assert	ccname != null :
-					new PreconditionException("Connector class name is null!") ;
+				new PreconditionException("Connector class name is null!") ;
 		assert	this.isPortExisting(portURI) :
-					new PreconditionException(portURI + " is not a port!") ;
+				new PreconditionException(portURI + " is not a port!") ;
 		assert	!this.isPortConnected(portURI) :
-					new PreconditionException(portURI + " is already "
-															+ "connected!") ;
+				new PreconditionException(portURI + " is already "
+						+ "connected!") ;
 
 		PortI p = this.findPortFromURI(portURI) ;
 		p.doConnection(otherPortURI, ccname) ;
@@ -2606,27 +2620,27 @@ implements	ComponentI
 	 */
 	@Override
 	public void			doPortConnection(
-		String portURI,
-		String otherPortURI,
-		ConnectorI connector
-		) throws Exception 
+			String portURI,
+			String otherPortURI,
+			ConnectorI connector
+	) throws Exception
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	portURI != null :
-					new PreconditionException("Port URI is null!") ;
+				new PreconditionException("Port URI is null!") ;
 		assert	otherPortURI != null :
-					new PreconditionException("Other port URI is null!") ;
+				new PreconditionException("Other port URI is null!") ;
 		assert	connector != null :
-					new PreconditionException("Connector is null!") ;
+				new PreconditionException("Connector is null!") ;
 		assert	this.isPortExisting(portURI) :
-					new PreconditionException(portURI + " is not a port!") ;
+				new PreconditionException(portURI + " is not a port!") ;
 		assert	!this.isPortConnected(portURI) :
-					new PreconditionException(portURI + " is already "
-															+ "connected!") ;
+				new PreconditionException(portURI + " is already "
+						+ "connected!") ;
 
 		PortI p = this.findPortFromURI(portURI) ;
 		p.doConnection(otherPortURI, connector) ;
@@ -2635,40 +2649,40 @@ implements	ComponentI
 	}
 
 	/**
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	true				// no more preconditions.
 	 * post	true				// no more postconditions.
 	 * </pre>
-	 * 
+	 *
 	 * @see fr.sorbonne_u.components.ComponentI#doPortDisconnection(java.lang.String)
 	 */
 	@Override
 	public void			doPortDisconnection(String portURI) throws Exception
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	portURI != null :
-					new PreconditionException(
-										"Can't disconnect null port URI!") ;
+				new PreconditionException(
+						"Can't disconnect null port URI!") ;
 		assert	this.isPortExisting(portURI) :
-					new PreconditionException(
-							"Can't disconnect non existing port : " + portURI) ;
+				new PreconditionException(
+						"Can't disconnect non existing port : " + portURI) ;
 		assert	this.isPortConnected(portURI) :
-					new PreconditionException(
+				new PreconditionException(
 						"Can't disconnect not connected port : " + portURI) ;
-	
+
 		PortI p = this.findPortFromURI(portURI) ;
 		p.doDisconnection() ;
 
 		assert	!this.isPortConnected(portURI) :
-					new PostconditionException("Port has not been "
-											+ "correctly disconnected!") ;
+				new PostconditionException("Port has not been "
+						+ "correctly disconnected!") ;
 	}
 
 	/**
@@ -2678,23 +2692,23 @@ implements	ComponentI
 	public void			removePort(String portURI) throws Exception
 	{
 		assert	this.notInStateAmong(new ComponentStateI[]{
-							ComponentState.TERMINATED
-							}) :
-					new PreconditionException("Component must not be"
-												+ " in Terminated state!") ;
+				ComponentState.TERMINATED
+		}) :
+				new PreconditionException("Component must not be"
+						+ " in Terminated state!") ;
 		assert	portURI != null :
-			new PreconditionException("Can't remove undefined port URI : "
-																+ portURI) ;
+				new PreconditionException("Can't remove undefined port URI : "
+						+ portURI) ;
 		assert	this.isPortExisting(portURI) :
-					new PreconditionException("Can't remove non existing port : "
-																+ portURI) ;
+				new PreconditionException("Can't remove non existing port : "
+						+ portURI) ;
 
 		PortI p = this.findPortFromURI(portURI) ;
 		this.removePort(p) ;
 
 		assert	!this.isPortExisting(portURI) :
-					new PostconditionException("Pourt has not been "
-												+ "correctly removed!") ;
+				new PostconditionException("Pourt has not been "
+						+ "correctly removed!") ;
 	}
 
 	// ------------------------------------------------------------------------
@@ -2725,21 +2739,21 @@ implements	ComponentI
 	@Override
 	public void			execute() throws Exception
 	{
-		assert	this.isStarted() ;	
+		assert	this.isStarted() ;
 
 		for(ComponentI c : this.innerComponents) {
 			if (c.hasItsOwnThreads()) {
 				c.runTask(
-					new AbstractTask() {
-						@Override
-						public void run() {
-							try {
-								this.getTaskOwner().execute() ;
-							} catch (Exception e) {
-								throw new RuntimeException(e) ;
+						new AbstractTask() {
+							@Override
+							public void run() {
+								try {
+									this.getTaskOwner().execute() ;
+								} catch (Exception e) {
+									throw new RuntimeException(e) ;
+								}
 							}
-						}
-					}) ;
+						}) ;
 			}
 		}
 	}
@@ -2751,14 +2765,14 @@ implements	ComponentI
 	public void			finalise() throws Exception
 	{
 		assert	this.isStarted() :
-					new PreconditionException("AbstractComponent#finalise: "
-												+ this + " not started!") ;
+				new PreconditionException("AbstractComponent#finalise: "
+						+ this + " not started!") ;
 
 		for(ComponentI c : this.innerComponents) {
 			c.finalise() ;
 		}
 
-		for (Map.Entry<String,PluginI> e : this.installedPlugins.entrySet()) {			
+		for (Map.Entry<String,PluginI> e : this.installedPlugins.entrySet()) {
 			this.finalisePlugin(e.getKey()) ;
 		}
 		String[] reflPortURI =
@@ -2798,26 +2812,26 @@ implements	ComponentI
 
 		boolean isSubcomponent = this.isSubcomponent() ;
 		Thread t = new Thread() {
-						/**
-						 * @see java.lang.Thread#run()
-						 */
-						@Override
-						public void run() {
-							for (int i = 0 ; i < executorServices.size() ; i++) {
-								executorServices.get(i).shutdown() ;
-							}
-							state = ComponentState.SHUTTINGDOWN ;
-							// TODO: make sure the pools are really shut down.
-							if (!isConcurrent && !canScheduleTasks) {
-								state = ComponentState.SHUTDOWN ;
-							}
-							if (!isSubcomponent) {
-								AbstractCVM.getCVM().
-									removeDeployedComponent(
-													reflectionInboundPortURI) ;
-							}
-						}
-					} ;
+			/**
+			 * @see java.lang.Thread#run()
+			 */
+			@Override
+			public void run() {
+				for (int i = 0 ; i < executorServices.size() ; i++) {
+					executorServices.get(i).shutdown() ;
+				}
+				state = ComponentState.SHUTTINGDOWN ;
+				// TODO: make sure the pools are really shut down.
+				if (!isConcurrent && !canScheduleTasks) {
+					state = ComponentState.SHUTDOWN ;
+				}
+				if (!isSubcomponent) {
+					AbstractCVM.getCVM().
+							removeDeployedComponent(
+									reflectionInboundPortURI) ;
+				}
+			}
+		} ;
 		t.start() ;
 	}
 
@@ -2848,22 +2862,22 @@ implements	ComponentI
 
 		boolean isSubcomponent = this.isSubcomponent() ;
 		Thread t = new Thread() {
-						/**
-						 * @see java.lang.Thread#run()
-						 */
-						@Override
-						public void run() {
-							for (int i = 0 ; i < executorServices.size() ; i++) {
-								executorServices.get(i).shutdown() ;
-							}
-							state = ComponentState.SHUTDOWN ;
-							if (!isSubcomponent) {
-								AbstractCVM.getCVM().
-										removeDeployedComponent(
-													reflectionInboundPortURI) ;
-							}
-						}
-					} ;
+			/**
+			 * @see java.lang.Thread#run()
+			 */
+			@Override
+			public void run() {
+				for (int i = 0 ; i < executorServices.size() ; i++) {
+					executorServices.get(i).shutdown() ;
+				}
+				state = ComponentState.SHUTDOWN ;
+				if (!isSubcomponent) {
+					AbstractCVM.getCVM().
+							removeDeployedComponent(
+									reflectionInboundPortURI) ;
+				}
+			}
+		} ;
 		t.start() ;
 	}
 
@@ -2914,7 +2928,7 @@ implements	ComponentI
 		if (this.executorServices.size() > 0) {
 			for (int i = 0 ; i < this.executorServices.size() ; i++) {
 				isShutdown = isShutdown &&
-								this.executorServices.get(i).isShutdown() ;
+						this.executorServices.get(i).isShutdown() ;
 			}
 		}
 		if (isShutdown) {
@@ -2938,7 +2952,7 @@ implements	ComponentI
 		if (this.isConcurrent) {
 			for (int i = 0 ; i < this.executorServices.size() ; i++) {
 				isTerminated = isTerminated &&
-								this.executorServices.get(i).isTerminated() ;
+						this.executorServices.get(i).isTerminated() ;
 			}
 		} else {
 			isTerminated = this.isShutdown() ;
@@ -2954,7 +2968,7 @@ implements	ComponentI
 	 */
 	@Override
 	public boolean		awaitTermination(long timeout, TimeUnit unit)
-	throws	InterruptedException
+			throws	InterruptedException
 	{
 		if (this.state == ComponentState.TERMINATED) {
 			return true ;
@@ -2964,8 +2978,8 @@ implements	ComponentI
 		if (this.executorServices.size() > 0) {
 			for (int i = 0 ; i < this.executorServices.size() ; i++) {
 				status = status &&
-							this.executorServices.get(i).awaitTermination(
-															timeout, unit) ;
+						this.executorServices.get(i).awaitTermination(
+								timeout, unit) ;
 			}
 		}
 		if (status) {
@@ -2983,19 +2997,19 @@ implements	ComponentI
 	 * method implementations for component tasks.
 	 *
 	 * <p><strong>Description</strong></p>
-	 * 
+	 *
 	 * <p><strong>Invariant</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * invariant		true
 	 * </pre>
-	 * 
+	 *
 	 * <p>Created on : 2018-09-18</p>
-	 * 
+	 *
 	 * @author	<a href="mailto:Jacques.Malenfant@lip6.fr">Jacques Malenfant</a>
 	 */
 	public static abstract class	AbstractTask
-	implements	ComponentI.ComponentTask
+			implements	ComponentI.ComponentTask
 	{
 		protected AbstractComponent	taskOwner ;
 		protected final String		taskPluginURI ;
@@ -3003,9 +3017,9 @@ implements	ComponentI
 
 		/**
 		 * create a task which uses the owner component method only.
-		 * 
+		 *
 		 * <p><strong>Contract</strong></p>
-		 * 
+		 *
 		 * <pre>
 		 * pre	true			// no precondition.
 		 * post	true			// no postcondition.
@@ -3022,9 +3036,9 @@ implements	ComponentI
 		/**
 		 * create a task which uses both the owner component method and
 		 * methods of its designated plug-in.
-		 * 
+		 *
 		 * <p><strong>Contract</strong></p>
-		 * 
+		 *
 		 * <pre>
 		 * pre	pluginURI != null
 		 * post	true			// no postcondition.
@@ -3051,7 +3065,7 @@ implements	ComponentI
 
 			try {
 				assert this.taskPluginURI == null ||
-										owner.isInstalled(taskPluginURI) ;
+						owner.isInstalled(taskPluginURI) ;
 			} catch (Exception e) {
 				throw new RuntimeException(e) ;
 			}
@@ -3089,9 +3103,9 @@ implements	ComponentI
 		/**
 		 * run a lambda expression as a task, providing it the owner as
 		 * parameter.
-		 * 
+		 *
 		 * <p><strong>Contract</strong></p>
-		 * 
+		 *
 		 * <pre>
 		 * pre	t != null
 		 * post	true			// no postcondition.
@@ -3109,9 +3123,9 @@ implements	ComponentI
 
 	/**
 	 * run the <code>ComponentTask</code> on the given executor service.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	t != null
@@ -3125,37 +3139,37 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected Future<?>		runTaskOnComponent(
-		int executorServiceIndex,
-		ComponentTask t
-		) throws	AssertionError,
-					RejectedExecutionException
+			int executorServiceIndex,
+			ComponentTask t
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	t != null ;
 
 		t.setOwnerReference(this) ;
 		if (this.hasItsOwnThreads() &&
-						this.validExecutorServiceIndex(executorServiceIndex)) {
+				this.validExecutorServiceIndex(executorServiceIndex)) {
 			return this.executorServices.get(executorServiceIndex).
-												getExecutorService().submit(t) ;
+					getExecutorService().submit(t) ;
 		} else {
 			t.run() ;
 			Future<?> f =
-				new Future<Object>() {
+					new Future<Object>() {
 						@Override
 						public boolean	cancel(boolean maybeInterrupted)
 						{ return false ; }
 
 						@Override
 						public Object	get()
-						throws	InterruptedException, ExecutionException
+								throws	InterruptedException, ExecutionException
 						{ return null ; }
 
 						@Override
 						public Object get(long timeout, TimeUnit unit)
-						throws 	InterruptedException,
+								throws 	InterruptedException,
 								ExecutionException,
-							   	TimeoutException
+								TimeoutException
 						{ return null ; }
 
 						@Override
@@ -3166,15 +3180,15 @@ implements	ComponentI
 						public boolean	isDone()
 						{ return true ; }
 					} ;
-					return f ;
+			return f ;
 		}
 	}
 
 	/**
 	 * run the <code>ComponentTask</code> on the given executor service.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	this.validExecutorServiceURI(executorServiceURI)
@@ -3189,25 +3203,25 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected Future<?>		runTaskOnComponent(
-		String executorServiceURI,
-		ComponentTask t
-		) throws	AssertionError,
-					RejectedExecutionException
+			String executorServiceURI,
+			ComponentTask t
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceURI(executorServiceURI) ;
 		assert	t != null ;
 
 		int executorServiceIndex =
-						this.getExecutorServiceIndex(executorServiceURI) ;
+				this.getExecutorServiceIndex(executorServiceURI) ;
 		return this.runTaskOnComponent(executorServiceIndex, t) ;
 	}
 
 	/**
 	 * run the <code>ComponentTask</code> on the standard executor service.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	t != null
@@ -3220,23 +3234,23 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected Future<?>		runTaskOnComponent(ComponentTask t)
-	throws	AssertionError,
+			throws	AssertionError,
 			RejectedExecutionException
 	{
 		if (this.hasItsOwnThreads()) {
 			if (this.validExecutorServiceIndex(
-											this.standardRequestHandlerIndex)) {
+					this.standardRequestHandlerIndex)) {
 				return this.runTaskOnComponent(
-									this.standardRequestHandlerIndex, t) ;
+						this.standardRequestHandlerIndex, t) ;
 			} else {
 				assert	this.validExecutorServiceIndex(
-										this.standardSchedulableHandlerIndex) ;
+						this.standardSchedulableHandlerIndex) ;
 				return this.runTaskOnComponent(
-									this.standardSchedulableHandlerIndex, t) ;
+						this.standardSchedulableHandlerIndex, t) ;
 			}
 		} else {
 			return this.runTaskOnComponent(-1, t) ;
-		}			
+		}
 	}
 
 	/**
@@ -3244,7 +3258,7 @@ implements	ComponentI
 	 */
 	@Override
 	public void 		runTask(ComponentTask t)
-	throws	AssertionError,
+			throws	AssertionError,
 			RejectedExecutionException
 	{
 		this.runTaskOnComponent(t) ;
@@ -3255,13 +3269,13 @@ implements	ComponentI
 	 */
 	@Override
 	public void 		runTask(FComponentTask t)
-	throws	AssertionError,
+			throws	AssertionError,
 			RejectedExecutionException
 	{
 		this.runTask(new AbstractTask() {
-						@Override
-						public void run() { this.runTaskLambda(t); }
-		 			 }) ;
+			@Override
+			public void run() { this.runTaskLambda(t); }
+		}) ;
 	}
 
 	/**
@@ -3269,7 +3283,7 @@ implements	ComponentI
 	 */
 	@Override
 	public void			runTask(int executorServiceIndex, ComponentTask t)
-	throws	AssertionError,
+			throws	AssertionError,
 			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
@@ -3284,17 +3298,17 @@ implements	ComponentI
 	 */
 	@Override
 	public void			runTask(
-		String executorServiceURI,
-		ComponentTask t
-		) throws	AssertionError,
-					RejectedExecutionException
+			String executorServiceURI,
+			ComponentTask t
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceURI(executorServiceURI) ;
 		assert	t != null ;
 
 		int executorServiceIndex =
-						this.getExecutorServiceIndex(executorServiceURI) ;
+				this.getExecutorServiceIndex(executorServiceURI) ;
 		this.runTask(executorServiceIndex, t) ;
 	}
 
@@ -3303,16 +3317,16 @@ implements	ComponentI
 	 */
 	@Override
 	public void			runTask(
-		String executorServiceURI,
-		FComponentTask t
-		) throws	AssertionError,
-					RejectedExecutionException
+			String executorServiceURI,
+			FComponentTask t
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
-		this.runTask(executorServiceURI, 
-					 new AbstractTask() {
-						@Override
-						public void run() { this.runTaskLambda(t); }
-					 }) ;
+		this.runTask(executorServiceURI,
+				new AbstractTask() {
+					@Override
+					public void run() { this.runTaskLambda(t); }
+				}) ;
 	}
 
 	/**
@@ -3320,22 +3334,22 @@ implements	ComponentI
 	 */
 	@Override
 	public void			runTask(int executorServiceIndex, FComponentTask t)
-	throws	AssertionError,
+			throws	AssertionError,
 			RejectedExecutionException
 	{
 		this.runTask(executorServiceIndex,
-					 new AbstractTask() {
-						@Override
-						public void run() { this.runTaskLambda(t); }
-					 });
+				new AbstractTask() {
+					@Override
+					public void run() { this.runTaskLambda(t); }
+				});
 	}
 
 	/**
 	 * schedule a <code>ComponentTask</code> to be run after a given delay
 	 * on the given executor service.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	this.validExecutorServiceIndex(executorServiceIndex)
@@ -3353,12 +3367,12 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected ScheduledFuture<?>	scheduleTaskOnComponent(
-		int executorServiceIndex,
-		ComponentTask t,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			int executorServiceIndex,
+			ComponentTask t,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceIndex(executorServiceIndex) ;
@@ -3367,16 +3381,16 @@ implements	ComponentI
 
 		t.setOwnerReference(this) ;
 		return ((ComponentSchedulableExecutorServiceManager)
-					this.executorServices.get(executorServiceIndex)).
-						getScheduledExecutorService().schedule(t, delay, u) ;
+				this.executorServices.get(executorServiceIndex)).
+				getScheduledExecutorService().schedule(t, delay, u) ;
 	}
 
 	/**
 	 * schedule a <code>ComponentTask</code> to be run after a given delay
 	 * on the given executor service.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	this.validExecutorServiceURI(executorServiceURI)
@@ -3394,28 +3408,28 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected ScheduledFuture<?>	scheduleTaskOnComponent(
-		String executorServiceURI,
-		ComponentTask t,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			String executorServiceURI,
+			ComponentTask t,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceURI(executorServiceURI) ;
 		assert	t != null ;
 
 		int executorServiceIndex =
-							this.getExecutorServiceIndex(executorServiceURI) ;
+				this.getExecutorServiceIndex(executorServiceURI) ;
 		return this.scheduleTaskOnComponent(executorServiceIndex, t, delay, u) ;
 	}
 
 	/**
 	 * schedule a <code>ComponentTask</code> to be run after a given delay
 	 * on the given executor service.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	this.canScheduleTasks()
@@ -3432,18 +3446,18 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected ScheduledFuture<?>	scheduleTaskOnComponent(
-		ComponentTask t,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			ComponentTask t,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.canScheduleTasks() ;
 		assert	this.validExecutorServiceIndex(
-										this.standardSchedulableHandlerIndex) ;
+				this.standardSchedulableHandlerIndex) ;
 
 		return this.scheduleTaskOnComponent(
-							this.standardSchedulableHandlerIndex, t, delay, u) ;
+				this.standardSchedulableHandlerIndex, t, delay, u) ;
 	}
 
 	/**
@@ -3451,16 +3465,16 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTask(
-		ComponentTask t,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			ComponentTask t,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.canScheduleTasks() ;
 		assert	this.validExecutorServiceIndex(
-									this.standardSchedulableHandlerIndex) ;
+				this.standardSchedulableHandlerIndex) ;
 		assert	t != null && delay >= 0 && u != null ;
 
 		this.scheduleTask(this.standardSchedulableHandlerIndex, t, delay, u) ;
@@ -3471,16 +3485,16 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTask(
-		FComponentTask t,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			FComponentTask t,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		this.scheduleTask(new AbstractTask() {
-							@Override
-							public void run() { this.runTaskLambda(t); }
-						  }, delay, u) ;
+			@Override
+			public void run() { this.runTaskLambda(t); }
+		}, delay, u) ;
 	}
 
 	/**
@@ -3488,12 +3502,12 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTask(
-		String executorServiceURI,
-		ComponentTask t,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			String executorServiceURI,
+			ComponentTask t,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceURI(executorServiceURI) ;
@@ -3501,7 +3515,7 @@ implements	ComponentI
 		assert	t != null && delay >= 0 && u != null ;
 
 		int executorServiceIndex =
-							this.getExecutorServiceIndex(executorServiceURI) ;
+				this.getExecutorServiceIndex(executorServiceURI) ;
 		this.scheduleTask(executorServiceIndex, t, delay, u) ;
 	}
 
@@ -3510,18 +3524,18 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTask(
-		String executorServiceURI,
-		FComponentTask t,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			String executorServiceURI,
+			FComponentTask t,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
-		this.scheduleTask(executorServiceURI, 
-						  new AbstractTask() {
-							@Override
-							public void run() { this.runTaskLambda(t); }
-						  }, delay, u) ;
+		this.scheduleTask(executorServiceURI,
+				new AbstractTask() {
+					@Override
+					public void run() { this.runTaskLambda(t); }
+				}, delay, u) ;
 	}
 
 	/**
@@ -3529,12 +3543,12 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTask(
-		int executorServiceIndex,
-		ComponentTask t,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			int executorServiceIndex,
+			ComponentTask t,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceIndex(executorServiceIndex) ;
@@ -3549,18 +3563,18 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTask(
-		int executorServiceIndex,
-		FComponentTask t,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			int executorServiceIndex,
+			FComponentTask t,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		this.scheduleTask(executorServiceIndex,
-						  new AbstractTask() {
-							@Override
-							public void run() { this.runTaskLambda(t); }
-						  }, delay, u) ;
+				new AbstractTask() {
+					@Override
+					public void run() { this.runTaskLambda(t); }
+				}, delay, u) ;
 	}
 
 	/**
@@ -3574,9 +3588,9 @@ implements	ComponentI
 	 * of the executor. If any execution of this task takes longer than its
 	 * period, then subsequent executions may start late, but will not
 	 * concurrently execute.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	this.canScheduleTasks()
@@ -3594,13 +3608,13 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected ScheduledFuture<?>	scheduleTaskAtFixedRateOnComponent(
-		int executorServiceIndex,
-		ComponentTask t,
-		long initialDelay,
-		long period,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			int executorServiceIndex,
+			ComponentTask t,
+			long initialDelay,
+			long period,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceIndex(executorServiceIndex) ;
@@ -3609,10 +3623,10 @@ implements	ComponentI
 
 		t.setOwnerReference(this) ;
 		return ((ComponentSchedulableExecutorServiceManager)
-					this.executorServices.get(executorServiceIndex)).
-						getScheduledExecutorService().
-							scheduleAtFixedRate(t, initialDelay, period, u) ;
-		}
+				this.executorServices.get(executorServiceIndex)).
+				getScheduledExecutorService().
+				scheduleAtFixedRate(t, initialDelay, period, u) ;
+	}
 
 	/**
 	 * schedule a <code>ComponentTask</code> that becomes enabled first after
@@ -3625,9 +3639,9 @@ implements	ComponentI
 	 * of the executor. If any execution of this task takes longer than its
 	 * period, then subsequent executions may start late, but will not
 	 * concurrently execute.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	this.canScheduleTasks()
@@ -3645,22 +3659,22 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected ScheduledFuture<?>	scheduleTaskAtFixedRateOnComponent(
-		String executorServiceURI,
-		ComponentTask t,
-		long initialDelay,
-		long period,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			String executorServiceURI,
+			ComponentTask t,
+			long initialDelay,
+			long period,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceURI(executorServiceURI) ;
 		assert	t != null ;
 
 		int executorServiceIndex =
-							this.getExecutorServiceIndex(executorServiceURI) ;
+				this.getExecutorServiceIndex(executorServiceURI) ;
 		return this.scheduleTaskAtFixedRateOnComponent(
-							executorServiceIndex, t, initialDelay, period, u) ;
+				executorServiceIndex, t, initialDelay, period, u) ;
 	}
 
 	/**
@@ -3674,9 +3688,9 @@ implements	ComponentI
 	 * of the executor. If any execution of this task takes longer than its
 	 * period, then subsequent executions may start late, but will not
 	 * concurrently execute.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	this.canScheduleTasks()
@@ -3693,19 +3707,19 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected ScheduledFuture<?>	scheduleTaskAtFixedRateOnComponent(
-		ComponentTask t,
-		long initialDelay,
-		long period,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			ComponentTask t,
+			long initialDelay,
+			long period,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.validExecutorServiceIndex(
-											this.standardRequestHandlerIndex) ;
+				this.standardRequestHandlerIndex) ;
 
 		return this.scheduleTaskAtFixedRateOnComponent(
-										standardSchedulableHandlerIndex,
-										t, initialDelay, period, u) ;
+				standardSchedulableHandlerIndex,
+				t, initialDelay, period, u) ;
 	}
 
 	/**
@@ -3713,21 +3727,21 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTaskAtFixedRate(
-		ComponentTask t,
-		long initialDelay,
-		long period,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			ComponentTask t,
+			long initialDelay,
+			long period,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.canScheduleTasks() ;
 		assert	this.validExecutorServiceIndex(
-										this.standardSchedulableHandlerIndex) ;
+				this.standardSchedulableHandlerIndex) ;
 		assert	t != null && initialDelay >= 0  && period > 0 && u != null ;
 
 		this.scheduleTaskAtFixedRate(this.standardSchedulableHandlerIndex,
-									 t, initialDelay, period, u) ;
+				t, initialDelay, period, u) ;
 	}
 
 	/**
@@ -3735,18 +3749,18 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTaskAtFixedRate(
-		FComponentTask t,
-		long initialDelay,
-		long period,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			FComponentTask t,
+			long initialDelay,
+			long period,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		this.scheduleTaskAtFixedRate(
-						new AbstractTask() {
-							@Override
-							public void run() { this.runTaskLambda(t); }
-						}, initialDelay, period, u) ;
+				new AbstractTask() {
+					@Override
+					public void run() { this.runTaskLambda(t); }
+				}, initialDelay, period, u) ;
 	}
 
 	/**
@@ -3754,13 +3768,13 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTaskAtFixedRate(
-		String executorServiceURI,
-		ComponentTask t,
-		long initialDelay,
-		long period,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			String executorServiceURI,
+			ComponentTask t,
+			long initialDelay,
+			long period,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.canScheduleTasks() ;
@@ -3769,9 +3783,9 @@ implements	ComponentI
 		assert	t != null && initialDelay >= 0  && period > 0 && u != null ;
 
 		int executorServiceIndex =
-						this.getExecutorServiceIndex(executorServiceURI) ;
+				this.getExecutorServiceIndex(executorServiceURI) ;
 		this.scheduleTaskAtFixedRate(executorServiceIndex,
-									 t, initialDelay, period, u);
+				t, initialDelay, period, u);
 	}
 
 	/**
@@ -3779,20 +3793,20 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTaskAtFixedRate(
-		String executorServiceURI,
-		FComponentTask t,
-		long initialDelay,
-		long period,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			String executorServiceURI,
+			FComponentTask t,
+			long initialDelay,
+			long period,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		this.scheduleTaskAtFixedRate(
-						executorServiceURI,
-						new AbstractTask() {
-							@Override
-							public void run() { this.runTaskLambda(t); }
-						}, initialDelay, period, u) ;
+				executorServiceURI,
+				new AbstractTask() {
+					@Override
+					public void run() { this.runTaskLambda(t); }
+				}, initialDelay, period, u) ;
 	}
 
 	/**
@@ -3800,13 +3814,13 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTaskAtFixedRate(
-		int executorServiceIndex,
-		ComponentTask t,
-		long initialDelay,
-		long period,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			int executorServiceIndex,
+			ComponentTask t,
+			long initialDelay,
+			long period,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.canScheduleTasks() ;
@@ -3815,7 +3829,7 @@ implements	ComponentI
 		assert	t != null && initialDelay >= 0  && period > 0 && u != null ;
 
 		this.scheduleTaskAtFixedRateOnComponent(executorServiceIndex,
-												t, initialDelay, period, u) ;
+				t, initialDelay, period, u) ;
 	}
 
 	/**
@@ -3823,20 +3837,20 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTaskAtFixedRate(
-		int executorServiceIndex,
-		FComponentTask t,
-		long initialDelay,
-		long period,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			int executorServiceIndex,
+			FComponentTask t,
+			long initialDelay,
+			long period,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		this.scheduleTaskAtFixedRate(
-					executorServiceIndex,
-					new AbstractTask() {
-						@Override
-						public void run() { this.runTaskLambda(t); }
-					}, initialDelay, period, u) ;
+				executorServiceIndex,
+				new AbstractTask() {
+					@Override
+					public void run() { this.runTaskLambda(t); }
+				}, initialDelay, period, u) ;
 	}
 
 	/**
@@ -3846,9 +3860,9 @@ implements	ComponentI
 	 * execution of the task encounters an exception, subsequent executions
 	 * are suppressed. Otherwise, the task will only terminate via cancellation
 	 * or termination of the executor.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	this.canScheduleTasks()
@@ -3866,13 +3880,13 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected ScheduledFuture<?>	scheduleTaskWithFixedDelayOnComponent(
-		int executorServiceIndex,
-		ComponentTask t,
-		long initialDelay,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			int executorServiceIndex,
+			ComponentTask t,
+			long initialDelay,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceIndex(executorServiceIndex) ;
@@ -3882,8 +3896,8 @@ implements	ComponentI
 		t.setOwnerReference(this) ;
 		return ((ComponentSchedulableExecutorServiceManager)
 				this.executorServices.get(executorServiceIndex)).
-					getScheduledExecutorService().scheduleWithFixedDelay(
-												t, initialDelay, delay, u) ;
+				getScheduledExecutorService().scheduleWithFixedDelay(
+				t, initialDelay, delay, u) ;
 	}
 
 	/**
@@ -3893,9 +3907,9 @@ implements	ComponentI
 	 * execution of the task encounters an exception, subsequent executions
 	 * are suppressed. Otherwise, the task will only terminate via cancellation
 	 * or termination of the executor.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	this.canScheduleTasks()
@@ -3913,22 +3927,22 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected ScheduledFuture<?>	scheduleTaskWithFixedDelayOnComponent(
-		String executorServiceURI,
-		ComponentTask t,
-		long initialDelay,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			String executorServiceURI,
+			ComponentTask t,
+			long initialDelay,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceURI(executorServiceURI) ;
 		assert	t != null ;
 
 		int executorServiceIndex =
-							this.getExecutorServiceIndex(executorServiceURI) ;
+				this.getExecutorServiceIndex(executorServiceURI) ;
 		return this.scheduleTaskWithFixedDelayOnComponent(
-							executorServiceIndex, t, initialDelay, delay, u) ;
+				executorServiceIndex, t, initialDelay, delay, u) ;
 	}
 
 	/**
@@ -3938,9 +3952,9 @@ implements	ComponentI
 	 * execution of the task encounters an exception, subsequent executions
 	 * are suppressed. Otherwise, the task will only terminate via cancellation
 	 * or termination of the executor.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	this.canScheduleTasks()
@@ -3957,19 +3971,19 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected ScheduledFuture<?>	scheduleTaskWithFixedDelayOnComponent(
-		ComponentTask t,
-		long initialDelay,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			ComponentTask t,
+			long initialDelay,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.validExecutorServiceIndex(
-										this.standardSchedulableHandlerIndex) ;
+				this.standardSchedulableHandlerIndex) ;
 
 		return this.scheduleTaskWithFixedDelayOnComponent(
-										this.standardSchedulableHandlerIndex,
-										t, initialDelay, delay, u) ;
+				this.standardSchedulableHandlerIndex,
+				t, initialDelay, delay, u) ;
 	}
 
 	/**
@@ -3977,21 +3991,21 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTaskWithFixedDelay(
-		ComponentTask t,
-		long initialDelay,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			ComponentTask t,
+			long initialDelay,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.canScheduleTasks() ;
 		assert	this.validExecutorServiceIndex(
-									this.standardSchedulableHandlerIndex) ;
+				this.standardSchedulableHandlerIndex) ;
 		assert	t != null && initialDelay >= 0 && delay >= 0 && u != null ;
 
 		this.scheduleTaskWithFixedDelay(this.standardSchedulableHandlerIndex,
-										t, initialDelay, delay, u) ;
+				t, initialDelay, delay, u) ;
 	}
 
 	/**
@@ -3999,18 +4013,18 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTaskWithFixedDelay(
-		FComponentTask t,
-		long initialDelay,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			FComponentTask t,
+			long initialDelay,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		this.scheduleTaskWithFixedDelay(
-					new AbstractTask() {
-						@Override
-						public void run() { this.runTaskLambda(t); }
-					}, initialDelay, delay, u) ;
+				new AbstractTask() {
+					@Override
+					public void run() { this.runTaskLambda(t); }
+				}, initialDelay, delay, u) ;
 	}
 
 	/**
@@ -4018,13 +4032,13 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTaskWithFixedDelay(
-		String executorServiceURI,
-		ComponentTask t,
-		long initialDelay,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			String executorServiceURI,
+			ComponentTask t,
+			long initialDelay,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.canScheduleTasks() ;
@@ -4033,9 +4047,9 @@ implements	ComponentI
 		assert	t != null && initialDelay >= 0  && delay > 0 && u != null ;
 
 		int executorServiceIndex =
-							this.getExecutorServiceIndex(executorServiceURI) ;
+				this.getExecutorServiceIndex(executorServiceURI) ;
 		this.scheduleTaskWithFixedDelay(executorServiceIndex,
-										t, initialDelay, delay, u) ;
+				t, initialDelay, delay, u) ;
 	}
 
 	/**
@@ -4043,20 +4057,20 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTaskWithFixedDelay(
-		String executorServiceURI,
-		FComponentTask t,
-		long initialDelay,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			String executorServiceURI,
+			FComponentTask t,
+			long initialDelay,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		this.scheduleTaskWithFixedDelay(
-						executorServiceURI,
-						new AbstractTask() {
-							@Override
-							public void run() { this.runTaskLambda(t); }
-						}, initialDelay, delay, u);
+				executorServiceURI,
+				new AbstractTask() {
+					@Override
+					public void run() { this.runTaskLambda(t); }
+				}, initialDelay, delay, u);
 	}
 
 	/**
@@ -4064,13 +4078,13 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTaskWithFixedDelay(
-		int executorServiceIndex,
-		ComponentTask t,
-		long initialDelay,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			int executorServiceIndex,
+			ComponentTask t,
+			long initialDelay,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.canScheduleTasks() ;
@@ -4079,7 +4093,7 @@ implements	ComponentI
 		assert	t != null && initialDelay >= 0  && delay > 0 && u != null ;
 
 		this.scheduleTaskWithFixedDelayOnComponent(executorServiceIndex,
-												   t, initialDelay, delay, u) ;
+				t, initialDelay, delay, u) ;
 	}
 
 	/**
@@ -4087,20 +4101,20 @@ implements	ComponentI
 	 */
 	@Override
 	public void			scheduleTaskWithFixedDelay(
-		int executorServiceIndex,
-		FComponentTask t,
-		long initialDelay,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			int executorServiceIndex,
+			FComponentTask t,
+			long initialDelay,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		this.scheduleTaskWithFixedDelay(
-						executorServiceIndex,
-						new AbstractTask() {
-							@Override
-							public void run() { this.runTaskLambda(t); }
-						}, initialDelay, delay, u);
+				executorServiceIndex,
+				new AbstractTask() {
+					@Override
+					public void run() { this.runTaskLambda(t); }
+				}, initialDelay, delay, u);
 	}
 
 	// ------------------------------------------------------------------------
@@ -4112,19 +4126,19 @@ implements	ComponentI
 	 * method implementations for component service calls.
 	 *
 	 * <p><strong>Description</strong></p>
-	 * 
+	 *
 	 * <p><strong>Invariant</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * invariant		true
 	 * </pre>
-	 * 
+	 *
 	 * <p>Created on : 2018-09-18</p>
-	 * 
+	 *
 	 * @author	<a href="mailto:Jacques.Malenfant@lip6.fr">Jacques Malenfant</a>
 	 */
 	public static abstract class	AbstractService<V>
-	implements	ComponentI.ComponentService<V>
+			implements	ComponentI.ComponentService<V>
 	{
 		protected AbstractComponent	serviceOwner ;
 		protected final String		servicePluginURI ;
@@ -4133,9 +4147,9 @@ implements	ComponentI
 		/**
 		 * create a service callable which calls a service directly
 		 * implemented by the object representing the component.
-		 * 
+		 *
 		 * <p><strong>Contract</strong></p>
-		 * 
+		 *
 		 * <pre>
 		 * pre	true			// no precondition.
 		 * post	true			// no postcondition.
@@ -4148,11 +4162,11 @@ implements	ComponentI
 		}
 
 		/**
-		 * create a service callable which calls a service 
+		 * create a service callable which calls a service
 		 * implemented by the designated plugin of the component.
-		 * 
+		 *
 		 * <p><strong>Contract</strong></p>
-		 * 
+		 *
 		 * <pre>
 		 * pre	pluginURI != null
 		 * post	true			// no postcondition.
@@ -4175,7 +4189,7 @@ implements	ComponentI
 
 			try {
 				assert	this.servicePluginURI == null ||
-										owner.isInstalled(servicePluginURI) ;
+						owner.isInstalled(servicePluginURI) ;
 			} catch (Exception e) {
 				throw new RuntimeException(e) ;
 			}
@@ -4212,9 +4226,9 @@ implements	ComponentI
 		/**
 		 * call a service lambda on the owner component passing the correct
 		 * parameters.
-		 * 
+		 *
 		 * <p><strong>Contract</strong></p>
-		 * 
+		 *
 		 * <pre>
 		 * pre	sl != null
 		 * post	true			// no postcondition.
@@ -4225,7 +4239,7 @@ implements	ComponentI
 		 * @throws Exception	<i>to do.</i>
 		 */
 		protected V			callServiceLambda(FComponentService<V> sl)
-		throws Exception
+				throws Exception
 		{
 			assert	sl != null ;
 
@@ -4236,9 +4250,9 @@ implements	ComponentI
 	/**
 	 * execute a request represented by a <code>ComponentService</code> on the
 	 * component.
-	 * 
+	 *
 	 * <p><strong>Description</strong></p>
-	 * 
+	 *
 	 * Uniform API entry to execute a call on the component.  The call, that
 	 * represents a method call on the object representing the component, is
 	 * embedded in a <code>ComponentService</code> object.  In concurrent
@@ -4246,9 +4260,9 @@ implements	ComponentI
 	 * Sequential components may simply use this method to handle requests, or
 	 * they may bypass it by directly calling the method on the object
 	 * representing the component for the sought of efficiency.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	task != null
@@ -4263,75 +4277,75 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected <T> Future<T>		handleRequest(
-		int executorServiceIndex,
-		ComponentService<T> request
-		) throws	AssertionError,
-					RejectedExecutionException
+			int executorServiceIndex,
+			ComponentService<T> request
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	request != null ;
 
 		request.setOwnerReference(this) ;
 		if (this.hasItsOwnThreads() &&
-						this.validExecutorServiceIndex(executorServiceIndex)) {
+				this.validExecutorServiceIndex(executorServiceIndex)) {
 			return this.executorServices.get(executorServiceIndex).
-										getExecutorService().submit(request) ;
+					getExecutorService().submit(request) ;
 		} else {
 			final ComponentService<T> t = request ;
 			return new Future<T>() {
-						@Override
-						public boolean	cancel(boolean mayInterruptIfRunning)
-						{ return false ; }
+				@Override
+				public boolean	cancel(boolean mayInterruptIfRunning)
+				{ return false ; }
 
-						@Override
-						public T		get()
+				@Override
+				public T		get()
 						throws	InterruptedException,
-								ExecutionException
-						{
-							try {
-								return t.call() ;
-							} catch (Exception e) {
-								throw new ExecutionException(e) ;
-							}
-						}
+						ExecutionException
+				{
+					try {
+						return t.call() ;
+					} catch (Exception e) {
+						throw new ExecutionException(e) ;
+					}
+				}
 
-						@Override
-						public T		get(long timeout, TimeUnit unit)
+				@Override
+				public T		get(long timeout, TimeUnit unit)
 						throws	InterruptedException,
-								ExecutionException,
-								TimeoutException
-						{ 	try {
-								return t.call() ;
-							} catch (Exception e) {
-								throw new ExecutionException(e) ;
-							}
-						}
+						ExecutionException,
+						TimeoutException
+				{ 	try {
+					return t.call() ;
+				} catch (Exception e) {
+					throw new ExecutionException(e) ;
+				}
+				}
 
-						@Override
-						public boolean	isCancelled()
-						{ return false ; }
+				@Override
+				public boolean	isCancelled()
+				{ return false ; }
 
-						@Override
-						public boolean	isDone()
-						{ return true ; }
-					} ;
+				@Override
+				public boolean	isDone()
+				{ return true ; }
+			} ;
 		}
 	}
 
 	/**
 	 * execute a request represented by a <code>ComponentService</code> on the
 	 * component.
-	 * 
+	 *
 	 * <p><strong>Description</strong></p>
-	 * 
+	 *
 	 * This method is meant to be used when programmers need to manage within
 	 * a component requests with futures. It can be requests executed as
 	 * services of the component or calls to other components which are
 	 * synchronous but that the calling component wants to manage as
 	 * asynchronous tasks.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	this.validExecutorServiceURI(executorServiceURI)
@@ -4347,10 +4361,10 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected <T> Future<T>		handleRequest(
-		String executorServiceURI,
-		ComponentService<T> request
-		) throws	AssertionError,
-					RejectedExecutionException
+			String executorServiceURI,
+			ComponentService<T> request
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceURI(executorServiceURI) ;
@@ -4364,17 +4378,17 @@ implements	ComponentI
 	/**
 	 * execute a request represented by a <code>ComponentService</code> on the
 	 * component.
-	 * 
+	 *
 	 * <p><strong>Description</strong></p>
-	 * 
+	 *
 	 * This method is meant to be used when programmers need to manage within
 	 * a component requests with futures. It can be requests executed as
 	 * services of the component or calls to other components which are
 	 * synchronous but that the calling component wants to manage as
 	 * asynchronous tasks.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	this.validExecutorServiceIndex(this.standardRequestHandlerIndex) ||
@@ -4390,17 +4404,17 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected <T> Future<T>		handleRequest(
-		ComponentService<T> request
-		) throws	AssertionError,
-					RejectedExecutionException
+			ComponentService<T> request
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		if (this.validExecutorServiceIndex(this.standardRequestHandlerIndex)) {
 			return this.handleRequest(this.standardRequestHandlerIndex,
-									  request) ;
+					request) ;
 		} else if (this.validExecutorServiceIndex(
-										this.standardSchedulableHandlerIndex)) {
+				this.standardSchedulableHandlerIndex)) {
 			return this.handleRequest(this.standardSchedulableHandlerIndex,
-									  request) ;
+					request) ;
 		} else {
 			return this.handleRequest(-1, request) ;
 		}
@@ -4411,12 +4425,12 @@ implements	ComponentI
 	 */
 	@Override
 	public <T> T		handleRequestSync(
-		int executorServiceIndex,
-		ComponentService<T> request
-		) throws	AssertionError,
-					RejectedExecutionException,
-					InterruptedException,
-					ExecutionException
+			int executorServiceIndex,
+			ComponentService<T> request
+	) throws	AssertionError,
+			RejectedExecutionException,
+			InterruptedException,
+			ExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceIndex(executorServiceIndex) ;
@@ -4430,7 +4444,7 @@ implements	ComponentI
 	 */
 	@Override
 	public <T> T			handleRequestSync(ComponentService<T> request)
-	throws	AssertionError,
+			throws	AssertionError,
 			RejectedExecutionException,
 			InterruptedException,
 			ExecutionException
@@ -4440,15 +4454,15 @@ implements	ComponentI
 
 		if (this.hasItsOwnThreads()) {
 			if (this.validExecutorServiceIndex(
-										this.standardRequestHandlerIndex)) {
+					this.standardRequestHandlerIndex)) {
 				return this.handleRequest(this.standardRequestHandlerIndex,
-															request).get() ;
+						request).get() ;
 			} else {
 				assert this.validExecutorServiceIndex(
-									this.standardSchedulableHandlerIndex) ;
+						this.standardSchedulableHandlerIndex) ;
 				return this.handleRequest(
-								this.standardSchedulableHandlerIndex,
-								request).get() ;
+						this.standardSchedulableHandlerIndex,
+						request).get() ;
 			}
 		} else {
 			return this.handleRequest(-1, request).get() ;
@@ -4460,19 +4474,19 @@ implements	ComponentI
 	 */
 	@Override
 	public <T> T		handleRequestSync(
-		FComponentService<T> request
-		) throws	AssertionError,
-					RejectedExecutionException,
-					InterruptedException,
-					ExecutionException
+			FComponentService<T> request
+	) throws	AssertionError,
+			RejectedExecutionException,
+			InterruptedException,
+			ExecutionException
 	{
 		return this.handleRequestSync(
-							new AbstractService<T>() {
-								@Override
-								public T call() throws Exception {
-									return this.callServiceLambda(request) ;
-								}								
-							}) ;
+				new AbstractService<T>() {
+					@Override
+					public T call() throws Exception {
+						return this.callServiceLambda(request) ;
+					}
+				}) ;
 	}
 
 	/**
@@ -4480,12 +4494,12 @@ implements	ComponentI
 	 */
 	@Override
 	public <T> T		handleRequestSync(
-		String executorServiceURI,
-		ComponentService<T> request
-		) throws	AssertionError,
-					RejectedExecutionException,
-					InterruptedException,
-					ExecutionException
+			String executorServiceURI,
+			ComponentService<T> request
+	) throws	AssertionError,
+			RejectedExecutionException,
+			InterruptedException,
+			ExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceURI(executorServiceURI) ;
@@ -4501,21 +4515,21 @@ implements	ComponentI
 	 */
 	@Override
 	public <T> T		handleRequestSync(
-		String executorServiceURI,
-		FComponentService<T> request
-		) throws	AssertionError,
-					RejectedExecutionException,
-					InterruptedException,
-					ExecutionException
+			String executorServiceURI,
+			FComponentService<T> request
+	) throws	AssertionError,
+			RejectedExecutionException,
+			InterruptedException,
+			ExecutionException
 	{
 		return this.handleRequestSync(
-							executorServiceURI,
-							new AbstractService<T>() {
-								@Override
-								public T call() throws Exception {
-									return this.callServiceLambda(request) ;
-								}
-							}) ;
+				executorServiceURI,
+				new AbstractService<T>() {
+					@Override
+					public T call() throws Exception {
+						return this.callServiceLambda(request) ;
+					}
+				}) ;
 	}
 
 	/**
@@ -4523,28 +4537,28 @@ implements	ComponentI
 	 */
 	@Override
 	public <T> T		handleRequestSync(
-		int executorServiceIndex,
-		FComponentService<T> request
-		) throws	AssertionError,
-					RejectedExecutionException,
-					InterruptedException,
-					ExecutionException
+			int executorServiceIndex,
+			FComponentService<T> request
+	) throws	AssertionError,
+			RejectedExecutionException,
+			InterruptedException,
+			ExecutionException
 	{
 		return this.handleRequestSync(
-							executorServiceIndex,
-							new AbstractService<T>() {
-								@Override
-								public T call() throws Exception {
-									return this.callServiceLambda(request) ;
-								}
-							}) ;
+				executorServiceIndex,
+				new AbstractService<T>() {
+					@Override
+					public T call() throws Exception {
+						return this.callServiceLambda(request) ;
+					}
+				}) ;
 	}
 
 	/**
 	 * schedule a service for execution after a given delay.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	this.isStarted()
 	 * pre	this.canScheduleTasks()
@@ -4562,12 +4576,12 @@ implements	ComponentI
 	 * @throws RejectedExecutionException	if the task cannot be scheduled for execution.
 	 */
 	protected <T> ScheduledFuture<T>	scheduleRequest(
-		int executorServiceIndex,
-		ComponentService<T> request,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException
+			int executorServiceIndex,
+			ComponentService<T> request,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceIndex(executorServiceIndex) ;
@@ -4576,9 +4590,9 @@ implements	ComponentI
 
 		request.setOwnerReference(this) ;
 		return ((ComponentSchedulableExecutorServiceManager)
-					this.executorServices.get(executorServiceIndex)).
-							getScheduledExecutorService().
-											schedule(request, delay, u) ;
+				this.executorServices.get(executorServiceIndex)).
+				getScheduledExecutorService().
+				schedule(request, delay, u) ;
 	}
 
 	/**
@@ -4586,14 +4600,14 @@ implements	ComponentI
 	 */
 	@Override
 	public <T> T 			scheduleRequestSync(
-		int executorServiceIndex,
-		ComponentService<T> request,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException,
-					InterruptedException,
-					ExecutionException
+			int executorServiceIndex,
+			ComponentService<T> request,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException,
+			InterruptedException,
+			ExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceIndex(executorServiceIndex) ;
@@ -4601,7 +4615,7 @@ implements	ComponentI
 		assert	request != null && delay >= 0 && u != null ;
 
 		return this.scheduleRequest(
-						executorServiceIndex, request, delay, u).get() ;
+				executorServiceIndex, request, delay, u).get() ;
 	}
 
 	/**
@@ -4609,22 +4623,22 @@ implements	ComponentI
 	 */
 	@Override
 	public <T> T			scheduleRequestSync(
-		ComponentService<T> request,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException,
-					InterruptedException,
-					ExecutionException
+			ComponentService<T> request,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException,
+			InterruptedException,
+			ExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.canScheduleTasks() ;
 		assert	this.validExecutorServiceIndex(
-									this.standardSchedulableHandlerIndex) ;
+				this.standardSchedulableHandlerIndex) ;
 		assert	request != null && delay >= 0 && u != null ;
 
 		return this.scheduleRequestSync(this.standardSchedulableHandlerIndex,
-														request, delay, u) ;
+				request, delay, u) ;
 	}
 
 	/**
@@ -4632,21 +4646,21 @@ implements	ComponentI
 	 */
 	@Override
 	public <T> T			scheduleRequestSync(
-		FComponentService<T> request,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException,
-					InterruptedException,
-					ExecutionException
+			FComponentService<T> request,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException,
+			InterruptedException,
+			ExecutionException
 	{
 		return this.scheduleRequestSync(
-								new AbstractService<T>() {
-									@Override
-									public T call() throws Exception {
-										return this.callServiceLambda(request) ;
-									}
-								}, delay, u) ;
+				new AbstractService<T>() {
+					@Override
+					public T call() throws Exception {
+						return this.callServiceLambda(request) ;
+					}
+				}, delay, u) ;
 	}
 
 	/**
@@ -4654,14 +4668,14 @@ implements	ComponentI
 	 */
 	@Override
 	public <T> T			scheduleRequestSync(
-		String executorServiceURI,
-		ComponentService<T> request,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException,
-					InterruptedException,
-					ExecutionException
+			String executorServiceURI,
+			ComponentService<T> request,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException,
+			InterruptedException,
+			ExecutionException
 	{
 		assert	this.isStarted() ;
 		assert	this.validExecutorServiceURI(executorServiceURI) ;
@@ -4669,9 +4683,9 @@ implements	ComponentI
 		assert	request != null && delay >= 0 && u != null ;
 
 		int executorServiceIndex =
-							this.getExecutorServiceIndex(executorServiceURI) ;
+				this.getExecutorServiceIndex(executorServiceURI) ;
 		return this.scheduleRequestSync(executorServiceIndex,
-										request, delay, u) ;
+				request, delay, u) ;
 	}
 
 	/**
@@ -4679,23 +4693,23 @@ implements	ComponentI
 	 */
 	@Override
 	public <T> T			scheduleRequestSync(
-		String executorServiceURI,
-		FComponentService<T> request,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException,
-					InterruptedException,
-					ExecutionException
+			String executorServiceURI,
+			FComponentService<T> request,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException,
+			InterruptedException,
+			ExecutionException
 	{
 		return this.scheduleRequestSync(
-								executorServiceURI,
-								new AbstractService<T>() {
-									@Override
-									public T call() throws Exception {
-										return this.callServiceLambda(request) ;
-									}
-								}, delay, u) ;
+				executorServiceURI,
+				new AbstractService<T>() {
+					@Override
+					public T call() throws Exception {
+						return this.callServiceLambda(request) ;
+					}
+				}, delay, u) ;
 	}
 
 	/**
@@ -4703,23 +4717,23 @@ implements	ComponentI
 	 */
 	@Override
 	public <T> T			scheduleRequestSync(
-		int executorServiceIndex,
-		FComponentService<T> request,
-		long delay,
-		TimeUnit u
-		) throws	AssertionError,
-					RejectedExecutionException,
-					InterruptedException,
-					ExecutionException
+			int executorServiceIndex,
+			FComponentService<T> request,
+			long delay,
+			TimeUnit u
+	) throws	AssertionError,
+			RejectedExecutionException,
+			InterruptedException,
+			ExecutionException
 	{
 		return this.scheduleRequestSync(
-								executorServiceIndex,
-								new AbstractService<T>() {
-									@Override
-									public T call() throws Exception {
-										return this.callServiceLambda(request) ;
-									}
-								}, delay, u) ;
+				executorServiceIndex,
+				new AbstractService<T>() {
+					@Override
+					public T call() throws Exception {
+						return this.callServiceLambda(request) ;
+					}
+				}, delay, u) ;
 	}
 
 	// ------------------------------------------------------------------------
@@ -4738,7 +4752,7 @@ implements	ComponentI
 	 */
 	@Override
 	public String			getComponentDefinitionClassName()
-	throws Exception
+			throws Exception
 	{
 		return this.getClass().getCanonicalName() ;
 	}
@@ -4766,7 +4780,7 @@ implements	ComponentI
 	 */
 	@Override
 	public ServiceSignature[]	getComponentServiceSignatures()
-	throws Exception
+			throws Exception
 	{
 		Vector<ServiceSignature> ret = new Vector<ServiceSignature>() ;
 		Class<?> clazz = this.getClass() ;
@@ -4775,8 +4789,8 @@ implements	ComponentI
 			for (int i = 0 ; i < ms.length ; i++) {
 				if (Modifier.isPublic(ms[i].getModifiers())) {
 					ret.add(new ServiceSignature(
-									ms[i].getReturnType(),
-									ms[i].getParameterTypes())) ;
+							ms[i].getReturnType(),
+							ms[i].getParameterTypes())) ;
 				}
 			}
 			clazz = clazz.getSuperclass() ;
@@ -4789,7 +4803,7 @@ implements	ComponentI
 	 */
 	@Override
 	public ConstructorSignature[]	getComponentConstructorSignatures()
-	throws Exception
+			throws Exception
 	{
 		Constructor<?>[] cons = this.getClass().getConstructors() ;
 		ConstructorSignature[] ret = new ConstructorSignature[cons.length] ;
@@ -4818,7 +4832,7 @@ implements	ComponentI
 	 */
 	@Override
 	public Object		invokeService(String name, Object[] params)
-	throws Exception
+			throws Exception
 	{
 		assert	this.isStarted() ;
 		assert	name != null && params != null ;
@@ -4835,13 +4849,13 @@ implements	ComponentI
 			index = this.standardSchedulableHandlerIndex ;
 		}
 		return this.handleRequest(
-						index,
-						new AbstractService<Object>() {
-							@Override
-							public Object call() throws Exception {
-								return m.invoke(this.getServiceOwner(), params) ;
-							}
-						}) ;
+				index,
+				new AbstractService<Object>() {
+					@Override
+					public Object call() throws Exception {
+						return m.invoke(this.getServiceOwner(), params) ;
+					}
+				}) ;
 	}
 
 	/**
@@ -4849,7 +4863,7 @@ implements	ComponentI
 	 */
 	@Override
 	public Object		invokeServiceSync(String name, Object[] params)
-	throws Exception
+			throws Exception
 	{
 		Class<?>[] pTypes = new Class<?>[params.length] ;
 		for (int i = 0 ; i < params.length ; i++) {
@@ -4857,12 +4871,12 @@ implements	ComponentI
 		}
 		Method m = this.getClass().getMethod(name, pTypes) ;
 		return this.handleRequestSync(
-						new AbstractService<Object>() {
-							@Override
-							public Object call() throws Exception {
-								return m.invoke(this.getServiceOwner(), params) ;
-							}
-						}) ;
+				new AbstractService<Object>() {
+					@Override
+					public Object call() throws Exception {
+						return m.invoke(this.getServiceOwner(), params) ;
+					}
+				}) ;
 	}
 
 	/**
@@ -4870,7 +4884,7 @@ implements	ComponentI
 	 */
 	@Override
 	public void			invokeServiceAsync(String name, Object[] params)
-	throws Exception
+			throws Exception
 	{
 		Class<?>[] pTypes = new Class<?>[params.length] ;
 		for (int i = 0 ; i < params.length ; i++) {
@@ -4878,17 +4892,17 @@ implements	ComponentI
 		}
 		Method m = this.getClass().getMethod(name, pTypes) ;
 		this.runTask(new AbstractComponent.AbstractTask() {
-						@Override
-						public void run() {
-							try {
-								m.invoke(this.getTaskOwner(), params) ;
-							} catch (IllegalAccessException |
-									 IllegalArgumentException |
-									 InvocationTargetException e) {
-								e.printStackTrace() ;
-							}
-						}
-					 });
+			@Override
+			public void run() {
+				try {
+					m.invoke(this.getTaskOwner(), params) ;
+				} catch (IllegalAccessException |
+						IllegalArgumentException |
+						InvocationTargetException e) {
+					e.printStackTrace() ;
+				}
+			}
+		});
 	}
 
 	/** Javassist classpool containing the component classes.				*/
@@ -4899,9 +4913,9 @@ implements	ComponentI
 	/**
 	 * ensure that the Javassist representation of the component's class
 	 * is loaded and can be accessed by the reflective code.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	true			// no precondition.
 	 * post	true			// no postcondition.
@@ -4914,26 +4928,26 @@ implements	ComponentI
 		if (AbstractComponent.javassistClassPool == null) {
 			AbstractComponent.javassistClassPool = javassist.ClassPool.getDefault() ;
 			String libFullName =
-				ClassLoader.getSystemClassLoader().getParent().
-					getResource("java/lang/String.class").toString() ;
+					ClassLoader.getSystemClassLoader().getParent().
+							getResource("java/lang/String.class").toString() ;
 			libFullName =
-				libFullName.replaceAll("rt.jar!/java/lang/String.class", "") ;
+					libFullName.replaceAll("rt.jar!/java/lang/String.class", "") ;
 			libFullName = libFullName.replaceAll("jar:file:", "") ;
 			AbstractComponent.javassistClassPool.appendClassPath(libFullName) ;
 		}
 		if (this.javassistClassForComponent == null) {
 			this.javassistClassForComponent =
 					AbstractComponent.javassistClassPool.
-								get(this.getClass().getCanonicalName()) ;
+							get(this.getClass().getCanonicalName()) ;
 		}
 	}
 
 	/**
 	 * get a declared method from the Javassist representation of the
 	 * component's class.
-	 * 
+	 *
 	 * <p><strong>Contract</strong></p>
-	 * 
+	 *
 	 * <pre>
 	 * pre	methodName != null
 	 * pre	parametersCanonicalClassNames != null
@@ -4946,52 +4960,52 @@ implements	ComponentI
 	 * @throws NotFoundException				if no method is found.
 	 */
 	protected CtMethod	getDeclaredMethod(
-		String methodName,
-		String[] parametersCanonicalClassNames
-		) throws NotFoundException
+			String methodName,
+			String[] parametersCanonicalClassNames
+	) throws NotFoundException
 	{
 		assert	methodName != null :
-					new PreconditionException("Method name is null!") ;
+				new PreconditionException("Method name is null!") ;
 		assert	parametersCanonicalClassNames != null :
-					new PreconditionException("Parameter type names array"
-													+ " can't be null!") ;
+				new PreconditionException("Parameter type names array"
+						+ " can't be null!") ;
 
 		CtClass[] paramCtClass =
-						new CtClass[parametersCanonicalClassNames.length] ;
+				new CtClass[parametersCanonicalClassNames.length] ;
 		for (int i = 0 ; i < parametersCanonicalClassNames.length ; i++) {
 			paramCtClass[i] =
-				AbstractComponent.javassistClassPool.
-									get(parametersCanonicalClassNames[i]) ;
+					AbstractComponent.javassistClassPool.
+							get(parametersCanonicalClassNames[i]) ;
 		}
 		CtMethod m = this.javassistClassForComponent.
-							getDeclaredMethod(methodName, paramCtClass) ;
+				getDeclaredMethod(methodName, paramCtClass) ;
 		return m ;
 	}
-	
+
 	/**
 	 * @see fr.sorbonne_u.components.ComponentI#insertBeforeService(java.lang.String, java.lang.String[], java.lang.String)
 	 */
 	@Override
 	public void			insertBeforeService(
-		String methodName,
-		String[] parametersCanonicalClassNames,
-		String code
-		) throws Exception
+			String methodName,
+			String[] parametersCanonicalClassNames,
+			String code
+	) throws Exception
 	{
 		assert	methodName != null :
-					new PreconditionException("Service name is null!") ;
+				new PreconditionException("Service name is null!") ;
 		assert	parametersCanonicalClassNames != null :
-					new PreconditionException("Parameter type names array"
-														+ " is null!") ;
+				new PreconditionException("Parameter type names array"
+						+ " is null!") ;
 		assert	code != null :
-					new PreconditionException("Code to be added is null!") ;
+				new PreconditionException("Code to be added is null!") ;
 
 		this.ensureLoaded() ;
 		CtMethod m = this.getDeclaredMethod(methodName,
-										   parametersCanonicalClassNames) ;
+				parametersCanonicalClassNames) ;
 		m.insertBefore(code) ;
 		HotSwapAgent.redefine(this.getClass(),
-							  this.javassistClassForComponent) ;
+				this.javassistClassForComponent) ;
 		this.javassistClassForComponent.defrost() ;
 	}
 
@@ -5000,25 +5014,25 @@ implements	ComponentI
 	 */
 	@Override
 	public void			insertAfterService(
-		String methodName,
-		String[] parametersCanonicalClassNames,
-		String code
-		) throws Exception
+			String methodName,
+			String[] parametersCanonicalClassNames,
+			String code
+	) throws Exception
 	{
 		assert	methodName != null :
-					new PreconditionException("Service name is null!") ;
+				new PreconditionException("Service name is null!") ;
 		assert	parametersCanonicalClassNames != null :
-					new PreconditionException("Parameter type names array"
-														+ " is null!") ;
+				new PreconditionException("Parameter type names array"
+						+ " is null!") ;
 		assert	code != null :
-					new PreconditionException("Code to be added is null!") ;
+				new PreconditionException("Code to be added is null!") ;
 
 		this.ensureLoaded() ;
 		CtMethod m = this.getDeclaredMethod(methodName,
-										   parametersCanonicalClassNames) ;
+				parametersCanonicalClassNames) ;
 		m.insertAfter(code) ;
 		HotSwapAgent.redefine(this.getClass(),
-							  this.javassistClassForComponent) ;
+				this.javassistClassForComponent) ;
 		this.javassistClassForComponent.defrost() ;
 	}
 }

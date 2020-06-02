@@ -4,14 +4,13 @@ import fr.sorbonne_u.components.qos.solver.booleval.ast.*;
 import fr.sorbonne_u.components.qos.solver.booleval.ast.nonterminal.*;
 import fr.sorbonne_u.components.qos.solver.booleval.ast.terminal.*;
 import fr.sorbonne_u.components.qos.solver.booleval.lexer.*;
-
+//
 public class RecursiveDescentParser {
 	private Lexer lexer;
 	private int symbol;
 	private BooleanExpression root;
 
-	private final True t = new True();
-	private final False f = new False();
+
 
 	public RecursiveDescentParser(Lexer lexer) {
 		this.lexer = lexer;
@@ -48,9 +47,6 @@ public class RecursiveDescentParser {
 		symbol = lexer.nextSymbol();
 		if (symbol == Lexer.TRUE) {
 			root = new True(Lexer.lastWord);
-			symbol = lexer.nextSymbol();
-		} else if (symbol == Lexer.FALSE) {
-			root = f;
 			symbol = lexer.nextSymbol();
 		} else if (symbol == Lexer.NOT) {
 			Not not = new Not();
