@@ -66,8 +66,8 @@ public interface URIConsumerI
 	@Post("ret != null")
 	//@Post("ret.length() > 5 && ret.length() < 16")
 	public String getURI() throws Exception ;
-	@Pre(expression = "numberOfURIs > 1 && numberOfURIs < 4")
-	//@Pre(expression = "numberOfURIs > 2 && numberOfURIs < 5")
+	
+	@Pre(expression = "numberOfURIs > 2 && numberOfURIs < 5")
 	@RequireContract(
 			contractType=Performance.class,
 			constraints= {"delay < 8000", "throughput > 0.1"}

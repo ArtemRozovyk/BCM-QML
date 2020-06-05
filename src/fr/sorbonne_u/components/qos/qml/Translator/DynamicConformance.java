@@ -1,4 +1,4 @@
-package fr.sorbonne_u.components.qos;
+package fr.sorbonne_u.components.qos.qml.Translator;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.qos.annotations.ContractDefinition;
 import fr.sorbonne_u.components.qos.annotations.Post;
 import fr.sorbonne_u.components.qos.annotations.Pre;
@@ -26,23 +25,23 @@ public class DynamicConformance {
 	 * in the appropriat port method
 	 *
 	 *
-	 * @param IR required interface
-	 * @param outboundPort the outboundport class
+	 * @param implementedInterface the implemented interface by the post class
+	 * @param port represent the port class
 	 * @throws Exception
 	 */
-	public static void AddDynamicConformityCode(CtClass IR, CtClass outboundPort) throws Exception {
+	public static void AddDynamicConformityCode(CtClass implementedInterface, CtClass port) throws Exception {
 
 		//get the interface super classes
-		ArrayList<CtClass> superClasses = getAllSuperClasses(IR);
+		ArrayList<CtClass> superClasses = getAllSuperClasses(implementedInterface);
 
 		//get all the methods of the interface
-		CtMethod[] methodsIR = IR.getDeclaredMethods();
+		CtMethod[] interfaceMethods = implementedInterface.getDeclaredMethods();
 
 		//for each method of the interface get its annotations and add the proper verification code in the matching class method
-		for (CtMethod mIR : methodsIR) {
+		for (CtMethod interfaceMethod : interfaceMethods) {
 
-			Object[] methodAnnotations = mIR.getAnnotations();
-			CtMethod cm = outboundPort.getDeclaredMethod(mIR.getName(), mIR.getParameterTypes());
+			Object[] methodAnnotations = interfaceMethod.getAnnotations();
+			CtMethod cm = port.getDeclaredMethod(interfaceMethod.getName(), interfaceMethod.getParameterTypes());
 
 			//for each annotation add the proper code verification
 			for(Object annotation : methodAnnotations ){
@@ -52,46 +51,47 @@ public class DynamicConformance {
 					//interface super classes code injection
 					for(int i = superClasses.size() -1 ; 0 > superClasses.size(); i--){
 						try {
-							CtMethod scm = superClasses.get(i).getDeclaredMethod(mIR.getName(), mIR.getParameterTypes());
+							CtMethod scm = superClasses.get(i).getDeclaredMethod(interfaceMethod.getName(), interfaceMethod.getParameterTypes());
 							Pre anno = (Pre) scm.getAnnotation(Pre.class);
 							expression = anno.expression();
 						} catch (NotFoundException e) {
 							continue;
 						}
-						cm.insertBefore("if (!(" + expression + "))" + "throw new IllegalArgumentException();");
+						cm.insertBefore("if (!(" + expression + "))" + "throw new fr.sorbonne_u.components.qos.RefinementException(\""+expression+"\");");
 					}
 					//interface code injection
 					expression = ((Pre)annotation).expression();
-					cm.insertBefore("if (!(" + expression + "))" + "throw new IllegalArgumentException();");
+					System.out.println("method : "+interfaceMethod.getName() +" expression : " +expression);
+					cm.insertBefore("if (!(" + expression + "))" + "throw new fr.sorbonne_u.components.exceptions.PreconditionException(\""+expression+"\");");
 				}
 				else if(annotation instanceof Post){
 					//interface code injection
 					String expression = ((Post)annotation).value();
-					expression = expression.replaceAll("\\b" + "ret" + "\\b", "\\$_"); //needs to be done properly (java parser ?? ...)
-					cm.insertAfter("if (!(" + expression + "))" + "throw new IllegalArgumentException();");
+					String modifiedExpression = expression.replaceAll("\\b" + "ret" + "\\b", "\\$_"); //needs to be done properly (java parser ?? ...)
+					cm.insertAfter("if (!(" + modifiedExpression + "))" + "throw new fr.sorbonne_u.components.exceptions.PostconditionException(\""+expression+"\");");
 					//interface super classes code injection
 					for(CtClass superClass : superClasses){
 						CtMethod scm;
 						try {
-							scm = superClass.getDeclaredMethod(mIR.getName(), mIR.getParameterTypes());
+							scm = superClass.getDeclaredMethod(interfaceMethod.getName(), interfaceMethod.getParameterTypes());
 							Post anno = (Post) scm.getAnnotation(Post.class);
 							expression = anno.value();
 						} catch (NotFoundException e) {
 							continue;
 						}
-						expression = expression.replaceAll("\\b" + "ret" + "\\b", "\\$_"); //needs to be done properly (java parser ?? ...)
-						cm.insertAfter("if (!(" + expression + "))" + "throw new IllegalArgumentException();");
+						modifiedExpression = expression.replaceAll("\\b" + "ret" + "\\b", "\\$_"); //needs to be done properly (java parser ?? ...)
+						cm.insertAfter("if (!(" + modifiedExpression + "))" + "throw fr.sorbonne_u.components.qos.RefinementException(\""+expression+"\");");
 					}
 				}
 			}
 		}
 
 		//add the map <Method,<List<ContractI>> to the outboundPort constructors
-		for(CtConstructor constructor : outboundPort.getDeclaredConstructors()){
+		for(CtConstructor constructor : port.getDeclaredConstructors()){
 			constructor.insertAfter("this.owner.getContractTypeMap().putAll((java.util.Map)"+DynamicConformance.class.getCanonicalName()+".getInterfaceContractMap(this.getImplementedInterface()));");
 		}
 
-		outboundPort.writeFile();
+		port.writeFile();
 
 	}
 

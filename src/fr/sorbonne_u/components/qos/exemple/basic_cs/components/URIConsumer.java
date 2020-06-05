@@ -83,7 +83,7 @@ extends		AbstractComponent
 	// Constructors and instance variables
 	// ------------------------------------------------------------------------
 
-	protected final static int	N = 2 ;
+	protected final static int	N = 3 ;
 
 	/**	the outbound port used to call the service.							*/
 	protected URIConsumerOutboundPort uriGetterPort ;

@@ -62,7 +62,9 @@ public interface URIProviderI
 			contractType= Performance.class,
 			constraints= {"delay < 3000"}
 	)
-	@Post("ret.length() > 8 && ret.length() < 15")
+	
+	@Post("ret != null")
+	//@Post("ret.length() > 8 && ret.length() < 15")
 	public String getURI() throws Exception ;
 
 	@Pre(expression = "numberOfURIs > 1 && numberOfURIs < 6 ")

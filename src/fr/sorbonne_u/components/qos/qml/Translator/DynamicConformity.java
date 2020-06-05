@@ -1,7 +1,7 @@
 package fr.sorbonne_u.components.qos.qml.Translator;
 
+import fr.sorbonne_u.components.ports.AbstractInboundPort;
 import fr.sorbonne_u.components.ports.AbstractOutboundPort;
-import fr.sorbonne_u.components.qos.*;
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -16,25 +16,20 @@ public class DynamicConformity implements Translator {
 
 		CtClass CurrentClazz = pool.getCtClass(classname);
 		CtClass abstractOutboundPort = pool.getCtClass(AbstractOutboundPort.class.getCanonicalName());
-		//CtClass abstractInboundPort = pool.getCtClass(AbstractInboundPort.class.getCanonicalName());
+		CtClass abstractInboundPort = pool.getCtClass(AbstractInboundPort.class.getCanonicalName());
 
-		//if the currentClazz is an outboundPort check conformity add DynamicConformityCode with its interfaces
-		if(CurrentClazz.getSuperclass() == abstractOutboundPort){
+		//if the currentClazz is an outboundPort or inboundPort check conformity add DynamicConformityCode with its interfaces
+		if(CurrentClazz.getSuperclass() == abstractOutboundPort || CurrentClazz.getSuperclass() == abstractInboundPort){
 			CtClass[]interfaces = CurrentClazz.getInterfaces();
-			for(CtClass IR : interfaces ){
+			for(CtClass implementedInterface : interfaces ){
 				try {
 					CurrentClazz.defrost();
-
-					fr.sorbonne_u.components.qos.DynamicConformance.AddDynamicConformityCode(IR, CurrentClazz);
+					DynamicConformance.AddDynamicConformityCode(implementedInterface, CurrentClazz);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 		}
-
-		//do same for inbound ports
-
-
 	}
 
 	//The method start() is called when this event listener is added to a javassist.Loader object by addTranslator()

@@ -152,7 +152,7 @@ implements URIProviderI
 	 * @see URIProviderI#getURIs(int)
 	 */
 	@Override
-	public String[]		getURIs(final int numberOfRequestedURIs)
+	public String[]		getURIs(final int numberOfURIs)
 	throws Exception
 	{
 		return this.getOwner().handleRequestSync(
@@ -160,7 +160,7 @@ implements URIProviderI
 					@Override
 					public String[] call() throws Exception {
 						return ((URIProvider)this.getServiceOwner()).
-								getURIsService(numberOfRequestedURIs) ;
+								getURIsService(numberOfURIs) ;
 					}
 				}) ;
 	}
