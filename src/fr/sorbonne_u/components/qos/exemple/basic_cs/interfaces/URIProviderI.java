@@ -63,8 +63,7 @@ public interface URIProviderI
 			constraints= {"delay < 3000"}
 	)
 	
-	@Post("ret != null")
-	//@Post("ret.length() > 8 && ret.length() < 15")
+	@Post("ret.length() > 20 && ret.length() < 53")
 	public String getURI() throws Exception ;
 
 	@Pre(expression = "numberOfURIs > 1 && numberOfURIs < 6 ")

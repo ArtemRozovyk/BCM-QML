@@ -5,18 +5,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import fr.sorbonne_u.components.qos.annotations.ContractDefinition;
 import fr.sorbonne_u.components.qos.annotations.Post;
 import fr.sorbonne_u.components.qos.annotations.Pre;
 import fr.sorbonne_u.components.qos.annotations.Require;
 import fr.sorbonne_u.components.qos.annotations.RequireContract;
-
 import fr.sorbonne_u.components.qos.qml.interfaces.*;
 import javassist.CtClass;
 import javassist.CtConstructor;
 import javassist.CtMethod;
-import javassist.NotFoundException;
 
 public class DynamicConformance {
 
@@ -30,9 +27,6 @@ public class DynamicConformance {
 	 * @throws Exception
 	 */
 	public static void AddDynamicConformityCode(CtClass implementedInterface, CtClass port) throws Exception {
-
-		//get the interface super classes
-		ArrayList<CtClass> superClasses = getAllSuperClasses(implementedInterface);
 
 		//get all the methods of the interface
 		CtMethod[] interfaceMethods = implementedInterface.getDeclaredMethods();
@@ -48,40 +42,13 @@ public class DynamicConformance {
 
 				if(annotation instanceof Pre){
 					String expression;
-					//interface super classes code injection
-					for(int i = superClasses.size() -1 ; 0 > superClasses.size(); i--){
-						try {
-							CtMethod scm = superClasses.get(i).getDeclaredMethod(interfaceMethod.getName(), interfaceMethod.getParameterTypes());
-							Pre anno = (Pre) scm.getAnnotation(Pre.class);
-							expression = anno.expression();
-						} catch (NotFoundException e) {
-							continue;
-						}
-						cm.insertBefore("if (!(" + expression + "))" + "throw new fr.sorbonne_u.components.qos.RefinementException(\""+expression+"\");");
-					}
-					//interface code injection
 					expression = ((Pre)annotation).expression();
-					System.out.println("method : "+interfaceMethod.getName() +" expression : " +expression);
 					cm.insertBefore("if (!(" + expression + "))" + "throw new fr.sorbonne_u.components.exceptions.PreconditionException(\""+expression+"\");");
 				}
 				else if(annotation instanceof Post){
-					//interface code injection
 					String expression = ((Post)annotation).value();
-					String modifiedExpression = expression.replaceAll("\\b" + "ret" + "\\b", "\\$_"); //needs to be done properly (java parser ?? ...)
+					String modifiedExpression = expression.replaceAll("\\b" + "ret" + "\\b", "\\$_"); 
 					cm.insertAfter("if (!(" + modifiedExpression + "))" + "throw new fr.sorbonne_u.components.exceptions.PostconditionException(\""+expression+"\");");
-					//interface super classes code injection
-					for(CtClass superClass : superClasses){
-						CtMethod scm;
-						try {
-							scm = superClass.getDeclaredMethod(interfaceMethod.getName(), interfaceMethod.getParameterTypes());
-							Post anno = (Post) scm.getAnnotation(Post.class);
-							expression = anno.value();
-						} catch (NotFoundException e) {
-							continue;
-						}
-						modifiedExpression = expression.replaceAll("\\b" + "ret" + "\\b", "\\$_"); //needs to be done properly (java parser ?? ...)
-						cm.insertAfter("if (!(" + modifiedExpression + "))" + "throw fr.sorbonne_u.components.qos.RefinementException(\""+expression+"\");");
-					}
 				}
 			}
 		}
@@ -203,32 +170,5 @@ public class DynamicConformance {
 		}
 		return null;
 
-	}
-
-	/**
-	 * get all super classes of a given class
-	 *
-	 * @param clazz
-	 * @return
-	 * @throws NotFoundException
-	 */
-	public static ArrayList<CtClass> getAllSuperClasses(CtClass clazz) throws NotFoundException {
-
-		ArrayList<CtClass> res = new ArrayList<CtClass>();
-
-		while (!"java.lang.Object".equals(clazz.getName())) {
-
-			// Get the super class
-			CtClass superClass = clazz.getSuperclass();
-
-			// Add the super class
-			res.add(superClass);
-
-			// Now inspect the superclass
-			clazz = superClass;
-
-		}
-
-		return res;
 	}
 }

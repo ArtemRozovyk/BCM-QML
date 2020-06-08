@@ -56,17 +56,18 @@ import fr.sorbonne_u.components.qos.qml.cttypes.*;
 )
 @Require(contractName = "systemReliability") //for each method.
 public interface URIConsumerI
-		extends		RequiredI
+		extends	 RequiredI
 {
 
 	@RequireContract(
 			contractType= Performance.class,
 			constraints= {"delay < 4000"}
 	)
-	@Post("ret != null")
-	//@Post("ret.length() > 5 && ret.length() < 16")
+	
+	@Post("ret.length() > 10 && ret.length() < 54")
 	public String getURI() throws Exception ;
 	
+	//numberOfURIs == 3
 	@Pre(expression = "numberOfURIs > 2 && numberOfURIs < 5")
 	@RequireContract(
 			contractType=Performance.class,
