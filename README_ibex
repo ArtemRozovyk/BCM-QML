@@ -1,0 +1,23 @@
+Pour installer ibex il suffit normalement de suivre les indications ici : 
+http://www.ibex-lib.org/doc/install.html#ibex-install
+
+L'installation sur mac doit se passer sans problèmes, 
+
+L'installation de ibex sur Ubuntu n'a pas été facile:
+Voici quelques commandes que j'ai du execuer pour faire fonctionner la lib  
+
+----------------------------------
+sudo apt-get install -y python2.7 flex bison gcc g++ make pkg-config
+sudo apt-get install libcppunit-dev
+echo $JAVA_HOME #(si c'est pas la bonne)
+export JAVA_HOME=/usr/lib/jvm/oracle-java8-jdk-amd64 #votre chemin avec quoi vous compilez
+
+#dans le dossier telechagé du ibex
+sudo ./waf configure [...] --enable-shared --with-jni --java-package-name=org.chocosolver.solver.constraints.real 
+sudo ./waf install
+cd /usr/local/lib/
+sudo cp libibex* /usr/lib/jvm/oracle-java8-jdk-amd64/jre/lib/amd64
+sudo cp -r ibex/ /usr/lib/jvm/oracle-java8-jdk-amd64/jre/lib/amd64
+#Justement au lancement, Choco essaie de trouver le .so installé dans /usr/local/lib, alors qu'il doit être dans le dossier lib de votre jvm...
+---------------------------
+Les erreurs du ./configure sont à prendre au sérieux. 

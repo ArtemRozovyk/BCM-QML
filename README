@@ -1,0 +1,12 @@
+Néssecité la précense de la librairie C++ Ibex http://www.ibex-lib.org/doc/install.html#ibex-install (voir le FAQ dans le même répertoire que ce fichier) 
+Les librairies utilisés sont également fournies. 
+
+Lancer la classe src/fr/sorbonne_u/components/qos/qml/Translator/Main.java
+
+Elle lance le translator javassist qui insère les vérification dynamiques et puis démarre l'exemple (avec les intérfaces riches en QML) : src/fr/sorbonne_u/components/qos/exemple/basic_cs/CVM.java qui procède à la vérification de conformité entre les intérfaces connectés (à la connexion dans src/fr/sorbonne_u/components/ports/AbstractOutboundPort.java ligne 402)
+
+L'effet d'execution est vérifiable en modifiant les valeurs dans les deux intérfaces
+src/fr/sorbonne_u/components/qos/exemple/basic_cs/interfaces/URIProviderI.java
+src/fr/sorbonne_u/components/qos/exemple/basic_cs/interfaces/URIConsumerI.java
+
+(On peut violet une implication serveur -> client pour les QML ou changer @Post("... ret.length() < 54") en ret.length() < 1 par exemple). 
